@@ -8,26 +8,24 @@
     </style>
 </head>
 <body>
-    <canvas id="canvas" width="512" height="512">HTML5 not supported</canvas>
+    <canvas id="canvas" width="512" height="512">no HTML5 support.</canvas>
     <script src="./taichi.js"></script>
-    <script src="./program.js"></script>
+    <script src="./simple_uv.py.js"></script>
     <script>
 let taichi = new Taichi(Module);
 let RES = 512;
 
 taichi.ready(function() {
 
-    taichi.get('render_c4_0')();
+    taichi.get('paint_c4_0')();
     let extr = taichi.set_ext_arr(0, [RES, RES, 4]);
-    taichi.get('matrix_to_ext_arr_c18_0')();
-    console.log(extr);
+    taichi.get('vector_to_image_c12_0')();
 
     let canvas = document.getElementById('canvas');
-    let ctx = canvas.getContext('2d');
-
     canvas.width = RES;
     canvas.height = RES;
 
+    let ctx = canvas.getContext('2d');
     let imgData = ctx.createImageData(RES, RES);
 
     for (let y = 0; y < RES; y++) {

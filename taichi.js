@@ -24,8 +24,8 @@ class Taichi {
 
     get(name) {
         let ret = this.module['_Tk_' + name];
-        if (ret === undefined) {
-            // ...
+        if (typeof ret == 'undefined') {
+            console.error('Undefined Taichi kernel:', name);
         }
         return function() {
             return ret(this.module._Ti_ctx);

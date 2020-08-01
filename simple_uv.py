@@ -1,16 +1,22 @@
 import taichi as ti
-ti.core.start_recording('program.yml')
-ti.init(arch=ti.cc)
+import numpy as np
 
-n = 512
-x = ti.Vector(3, ti.f32, (n, n))
+ti.init()
+
+res = 512, 512
+pixels = ti.Vector(3, dt=ti.f32, shape=res)
 
 
 @ti.kernel
-def render():
-    for i, j in x:
-        x[i, j] = [i / x.shape[0], j / x.shape[1], 0]
+def paint():
+    for i, j in pixels:
+        u = i / res[0]
+        v = j / res[1]
+        pixels[i, j] = [u, v, 0]
 
 
-render()
-x.to_numpy()
+gui = ti.GUI('UV', res)
+while not gui.get_event(ti.GUI.ESCAPE):
+    paint()
+    gui.set_image(pixels)
+    gui.show()

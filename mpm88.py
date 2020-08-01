@@ -1,7 +1,6 @@
 # MPM-MLS in 88 lines of Taichi code, originally created by @yuanming-hu
 import taichi as ti
-ti.core.start_recording('program.yml')
-ti.init(arch=ti.cc)
+ti.init(arch=ti.gpu)
 
 n_particles = 8192
 n_grid = 128

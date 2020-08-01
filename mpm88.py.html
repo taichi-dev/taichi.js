@@ -1,0 +1,66 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <style>
+    canvas {
+        border: 1px solid black;
+    }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512">no HTML5 support.</canvas>
+    <script src="./taichi.js"></script>
+    <script src="./mpm88.py.js"></script>
+    <script>
+let taichi = new Taichi(Module);
+let N = 8192;
+let RES = 512;
+
+taichi.ready(function() {
+
+    let matrix_to_ext_arr = taichi.get('matrix_to_ext_arr_c20_0');
+    let substep = taichi.get('substep_c4_0');
+    let init = taichi.get('init_c6_0');
+
+    init();
+
+    let fps = 0;
+    let last_time = Date.now();
+    function mainloop() {
+        window.requestAnimationFrame(mainloop);
+
+        if((Date.now() - last_time) >= 1000) {
+            console.log(fps, 'FPS');
+            last_time = Date.now();
+            fps = 0;
+        }
+        fps++;
+
+        for (let i = 0; i < 6; i++) {
+            substep();
+        }
+        let extr = taichi.set_ext_arr(0, [N, 2]);
+        matrix_to_ext_arr();
+
+        let canvas = document.getElementById('canvas');
+        canvas.width = RES;
+        canvas.height = RES;
+
+        let ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'blue';
+
+        for (let i = 0; i < N * 2;) {
+            let x = extr[i++] * RES;
+            let y = (1 - extr[i++]) * RES;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    }
+
+    mainloop();
+});
+    </script>
+</body>
+</html>

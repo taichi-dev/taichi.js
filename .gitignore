@@ -1,1 +1,4 @@
-/program.*
+/*.py.yml
+/*.py.wasm
+/*.py.js
+/*.py.c

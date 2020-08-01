@@ -30,11 +30,15 @@ taichi.ready(function() {
 
     let imgData = ctx.createImageData(RES, RES);
 
-    for (let i = 0; i < RES * RES * 4;) {
-        imgData.data[i] = parseInt(extr[i] * 255); i++;
-        imgData.data[i] = parseInt(extr[i] * 255); i++;
-        imgData.data[i] = parseInt(extr[i] * 255); i++;
-        imgData.data[i] = 255; i++;
+    for (let y = 0; y < RES; y++) {
+        for (let x = 0; x < RES; x++) {
+            let i = (y * RES + x) * 4;
+            let j = (x * RES + (RES - 1 - y)) * 4;
+            imgData.data[i++] = parseInt(extr[j++] * 255);
+            imgData.data[i++] = parseInt(extr[j++] * 255);
+            imgData.data[i++] = parseInt(extr[j++] * 255);
+            imgData.data[i++] = 255 - parseInt(extr[j++] * 255);
+        }
     }
 
     ctx.putImageData(imgData, 0, 0);

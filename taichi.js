@@ -1,4 +1,4 @@
-class JsTaichi {
+class Taichi {
     constructor(module) {
         this.module = module;
     }
@@ -10,17 +10,15 @@ class JsTaichi {
         let earg = this.module.HEAP32.subarray(earg_base, earg_base + 8);
         let args = this.module.HEAP32.subarray(args_base, args_base + 1);
 
+        args[0] = this.module._Ti_extr;
+
         let size = 1;
         for (let i = 0; i < shape.length; i++) {
             earg[i] = shape[i];
             size *= shape[i];
         }
-        console.log(earg);
-
-        args[0] = this.module._Ti_extr;
 
         let extr = this.module.HEAPF32.subarray(extr_base, extr_base + size);
-
         return extr;  // let the user fill it instead of our memcpy
     }
 
@@ -33,7 +31,8 @@ class JsTaichi {
             return ret(this.module._Ti_ctx);
         }.bind(this);
     }
-}
 
-if (typeof exports != 'undefined')
-    exports.JsTaichi = JsTaichi;
+    ready(cb) {
+        this.module.onRuntimeInitialized = cb;
+    }
+}

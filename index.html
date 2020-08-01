@@ -1,10 +1,44 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
+    <style>
+    canvas {
+        border: 1px solid black;
+    }
+    </style>
 </head>
 <body>
+    <canvas id="canvas" width="512" height="512">HTML5 not supported</canvas>
     <script src="./taichi.js"></script>
     <script src="./program.js"></script>
-    <script src="./test.js"></script>
+    <script>
+let taichi = new Taichi(Module);
+let RES = 512;
+
+taichi.ready(function() {
+
+    taichi.get('render_c4_0')();
+    let extr = taichi.set_ext_arr(0, [RES, RES, 4]);
+    taichi.get('matrix_to_ext_arr_c18_0')();
+    console.log(extr);
+
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('2d');
+
+    canvas.width = RES;
+    canvas.height = RES;
+
+    let imgData = ctx.createImageData(RES, RES);
+
+    for (let i = 0; i < RES * RES * 4;) {
+        imgData.data[i] = parseInt(extr[i] * 255); i++;
+        imgData.data[i] = parseInt(extr[i] * 255); i++;
+        imgData.data[i] = parseInt(extr[i] * 255); i++;
+        imgData.data[i] = 255; i++;
+    }
+
+    ctx.putImageData(imgData, 0, 0);
+});
+    </script>
 </body>
 </html>

@@ -1,8 +1,10 @@
-if (window && window.location.href.startsWith('file://')) {
-    alert('Taichi.js could not be functional when accessed from a local '
-        + 'file (i.e. file://) due to WASM limitation, please run '
-        + '`python server.py` in the project root directory and access '
-        + 'this page using http or https instead.');
+if (typeof window != 'undefined') {
+    if (window.location.href.startsWith('file://')) {
+        alert('Taichi.js could not be functional when accessed from a local '
+            + 'file (i.e. file://) due to WASM limitation, please run '
+            + '`python server.py` in the project root directory and access '
+            + 'this page using http or https instead.');
+    }
 }
 
 class Taichi {
@@ -115,4 +117,8 @@ class TaichiGUI {
             this.ctx.fill();
         }
     }
+}
+
+if (typeof exports != 'undefined') {
+    exports.Taichi = Taichi;
 }

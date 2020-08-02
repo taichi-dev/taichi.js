@@ -40,7 +40,10 @@ let mpm88 = new taichi.Taichi(require('./mpm88.py.js'));
 let init = mpm88.get('init_c4_0');
 let substep = mpm88.get('substep_c6_0');
 
-init();
+mpm88.ready(function() {
+    init();
+    ...
+});
 ```
 
 
@@ -55,7 +58,11 @@ let mpm88 = new Taichi(Module);
 let init = mpm88.get('init_c4_0');
 let substep = mpm88.get('substep_c6_0');
 
-init();
+mpm88.ready(function() {
+    init();
+    ...
+});
+</script>
 ```
 
 ## 3. Visualizing

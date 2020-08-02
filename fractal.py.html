@@ -18,23 +18,21 @@ let RES = 320;
 taichi.ready(function() {
 
     let canvas = document.getElementById('canvas');
-    canvas.width = RES;
-    canvas.height = RES;
-    let ctx = canvas.getContext('2d');
+    let gui = new TaichiGUI(canvas, RES);
 
     let paint = taichi.get('paint_c4_0');
     let tensor_to_image = taichi.get('tensor_to_image_c10_0');
 
     let frame = 0;
-    taichiAnimation(function() {
+    gui.animation(function() {
         frame++;
 
-        taichi.set_arg_float(0, frame * 0.03);
+        taichi.set_arg_float(0, frame * 0.04);
         paint();
         let extr = taichi.set_ext_arr(0, [RES, RES, 4]);
         tensor_to_image();
 
-        taichiSetImage(ctx, extr);
+        gui.set_image(extr);
     });
 });
     </script>

@@ -58,36 +58,61 @@ class Taichi {
     }
 }
 
-function taichiAnimation(callback) {
-    let fps = 0;
-    let last_time = Date.now();
-
-    function wrapped() {
-        window.requestAnimationFrame(wrapped);
-
-        if((Date.now() - last_time) >= 1000) {
-            console.log(fps, 'FPS');
-            last_time = Date.now();
-            fps = 0;
-        }
-        fps++;
-
-        callback();
+class TaichiGUI {
+    constructor(canvas, resx, resy) {
+        this.resx = resx || 512;
+        this.resy = resy || this.resx;
+        this.canvas = canvas;
+        this.ctx = this.canvas.getContext('2d');
+        this.canvas.width = this.resx;
+        this.canvas.height = this.resy;
     }
-    wrapped();
-}
 
-function taichiSetImage(ctx, image) {
-    let imgData = ctx.createImageData(RES, RES);
-    for (let y = 0; y < RES; y++) {
-        for (let x = 0; x < RES; x++) {
-            let i = (y * RES + x) * 4;
-            let j = (x * RES + (RES - 1 - y)) * 4;
-            imgData.data[i++] = parseInt(image[j++] * 255);
-            imgData.data[i++] = parseInt(image[j++] * 255);
-            imgData.data[i++] = parseInt(image[j++] * 255);
-            imgData.data[i++] = 255 - parseInt(image[j++] * 255);
+    animation(callback) {
+        let fps = 0;
+        let last_time = Date.now();
+
+        function wrapped() {
+            window.requestAnimationFrame(wrapped);
+            //setTimeout(wrapped, 1000 / 60);
+
+            if((Date.now() - last_time) >= 1000) {
+                console.log(fps, 'FPS');
+                last_time = Date.now();
+                fps = 0;
+            }
+            fps++;
+
+            callback();
+        }
+        wrapped();
+    }
+
+    set_image(image) {
+        let imgData = this.ctx.createImageData(RES, RES);
+        for (let y = 0; y < RES; y++) {
+            for (let x = 0; x < RES; x++) {
+                let i = (y * RES + x) * 4;
+                let j = (x * RES + (RES - 1 - y)) * 4;
+                imgData.data[i++] = parseInt(image[j++] * 255);
+                imgData.data[i++] = parseInt(image[j++] * 255);
+                imgData.data[i++] = parseInt(image[j++] * 255);
+                imgData.data[i++] = 255 - parseInt(image[j++] * 255);
+            }
+        }
+        this.ctx.putImageData(imgData, 0, 0);
+    }
+
+    circles(pos) {
+        this.ctx.fillStyle = 'white';
+        this.ctx.fillRect(0, 0, this.resx, this.resy);
+        this.ctx.fillStyle = 'black';
+        for (let i = 0; i < N * 2;) {
+            let x = pos[i++] * RES;
+            let y = (1 - pos[i++]) * RES;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 2, 0, 2 * Math.PI);
+            this.ctx.fill();
         }
     }
-    ctx.putImageData(imgData, 0, 0);
 }

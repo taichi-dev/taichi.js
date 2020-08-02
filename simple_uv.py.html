@@ -18,29 +18,16 @@ let RES = 512;
 taichi.ready(function() {
 
     let canvas = document.getElementById('canvas');
-    canvas.width = RES;
-    canvas.height = RES;
-    let ctx = canvas.getContext('2d');
+    let gui = new TaichiGUI(canvas, RES);
 
     let paint = taichi.get('paint_c4_0');
     let vector_to_image = taichi.get('vector_to_image_c12_0');
 
     paint();
     let extr = taichi.set_ext_arr(0, [RES, RES, 4]);
-    vector_to_iamge();
+    vector_to_image();
 
-    let imgData = ctx.createImageData(RES, RES);
-    for (let y = 0; y < RES; y++) {
-        for (let x = 0; x < RES; x++) {
-            let i = (y * RES + x) * 4;
-            let j = (x * RES + (RES - 1 - y)) * 4;
-            imgData.data[i++] = parseInt(extr[j++] * 255);
-            imgData.data[i++] = parseInt(extr[j++] * 255);
-            imgData.data[i++] = parseInt(extr[j++] * 255);
-            imgData.data[i++] = 255 - parseInt(extr[j++] * 255);
-        }
-    }
-    ctx.putImageData(imgData, 0, 0);
+    gui.set_image(extr);
 });
     </script>
 </body>

@@ -19,9 +19,7 @@ let RES = 512;
 taichi.ready(function() {
 
     let canvas = document.getElementById('canvas');
-    canvas.width = RES;
-    canvas.height = RES;
-    let ctx = canvas.getContext('2d');
+    let gui = new TaichiGUI(canvas, RES);
 
     let matrix_to_ext_arr = taichi.get('matrix_to_ext_arr_c20_0');
     let substep = taichi.get('substep_c4_0');
@@ -29,35 +27,15 @@ taichi.ready(function() {
 
     init();
 
-    let fps = 0;
-    let last_time = Date.now();
-    function mainloop() {
-        window.requestAnimationFrame(mainloop);
-
-        if((Date.now() - last_time) >= 1000) {
-            console.log(fps, 'FPS');
-            last_time = Date.now();
-            fps = 0;
-        }
-        fps++;
-
+    gui.animation(function() {
         for (let i = 0; i < 5; i++) {
             substep();
         }
         let extr = taichi.set_ext_arr(0, [N, 2]);
         matrix_to_ext_arr();
 
-        ctx.fillStyle = 'blue';
-        for (let i = 0; i < N * 2;) {
-            let x = extr[i++] * RES;
-            let y = (1 - extr[i++]) * RES;
-            ctx.beginPath();
-            ctx.arc(x, y, 2, 0, 2 * Math.PI);
-            ctx.fill();
-        }
-    }
-
-    mainloop();
+        gui.circles(extr);
+    });
 });
     </script>
 </body>

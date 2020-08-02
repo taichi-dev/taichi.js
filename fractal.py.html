@@ -1,0 +1,42 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <style>
+    canvas {
+        border: 1px solid black;
+    }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512">no HTML5 support.</canvas>
+    <script src="./taichi.js"></script>
+    <script src="./fractal.py.js"></script>
+    <script>
+let taichi = new Taichi(Module);
+let RES = 320;
+
+taichi.ready(function() {
+
+    let canvas = document.getElementById('canvas');
+    canvas.width = RES;
+    canvas.height = RES;
+    let ctx = canvas.getContext('2d');
+
+    let paint = taichi.get('paint_c4_0');
+    let tensor_to_image = taichi.get('tensor_to_image_c10_0');
+
+    let frame = 0;
+    taichiAnimation(function() {
+        frame++;
+
+        taichi.set_arg_float(0, frame * 0.03);
+        paint();
+        let extr = taichi.set_ext_arr(0, [RES, RES, 4]);
+        tensor_to_image();
+
+        taichiSetImage(ctx, extr);
+    });
+});
+    </script>
+</body>
+</html>

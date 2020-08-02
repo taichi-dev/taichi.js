@@ -18,6 +18,11 @@ let RES = 512;
 
 taichi.ready(function() {
 
+    let canvas = document.getElementById('canvas');
+    canvas.width = RES;
+    canvas.height = RES;
+    let ctx = canvas.getContext('2d');
+
     let matrix_to_ext_arr = taichi.get('matrix_to_ext_arr_c20_0');
     let substep = taichi.get('substep_c4_0');
     let init = taichi.get('init_c6_0');
@@ -36,23 +41,16 @@ taichi.ready(function() {
         }
         fps++;
 
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 5; i++) {
             substep();
         }
         let extr = taichi.set_ext_arr(0, [N, 2]);
         matrix_to_ext_arr();
 
-        let canvas = document.getElementById('canvas');
-        canvas.width = RES;
-        canvas.height = RES;
-
-        let ctx = canvas.getContext('2d');
         ctx.fillStyle = 'blue';
-
         for (let i = 0; i < N * 2;) {
             let x = extr[i++] * RES;
             let y = (1 - extr[i++]) * RES;
-
             ctx.beginPath();
             ctx.arc(x, y, 2, 0, 2 * Math.PI);
             ctx.fill();

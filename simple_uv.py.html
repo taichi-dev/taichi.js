@@ -17,17 +17,19 @@ let RES = 512;
 
 taichi.ready(function() {
 
-    taichi.get('paint_c4_0')();
-    let extr = taichi.set_ext_arr(0, [RES, RES, 4]);
-    taichi.get('vector_to_image_c12_0')();
-
     let canvas = document.getElementById('canvas');
     canvas.width = RES;
     canvas.height = RES;
-
     let ctx = canvas.getContext('2d');
-    let imgData = ctx.createImageData(RES, RES);
 
+    let paint = taichi.get('paint_c4_0');
+    let vector_to_image = taichi.get('vector_to_image_c12_0');
+
+    paint();
+    let extr = taichi.set_ext_arr(0, [RES, RES, 4]);
+    vector_to_iamge();
+
+    let imgData = ctx.createImageData(RES, RES);
     for (let y = 0; y < RES; y++) {
         for (let x = 0; x < RES; x++) {
             let i = (y * RES + x) * 4;
@@ -38,7 +40,6 @@ taichi.ready(function() {
             imgData.data[i++] = 255 - parseInt(extr[j++] * 255);
         }
     }
-
     ctx.putImageData(imgData, 0, 0);
 });
     </script>

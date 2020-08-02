@@ -106,10 +106,10 @@ class TaichiGUI {
     }
 
     circles(pos) {
-        this.ctx.fillStyle = 'white';
-        this.ctx.fillRect(0, 0, this.resx, this.resy);
         this.ctx.fillStyle = 'black';
-        for (let i = 0; i < N * 2;) {
+        this.ctx.fillRect(0, 0, this.resx, this.resy);
+        this.ctx.fillStyle = 'white';
+        for (let i = 0; i < pos.length;) {
             let x = pos[i++] * RES;
             let y = (1 - pos[i++]) * RES;
             this.ctx.beginPath();

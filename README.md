@@ -2,6 +2,8 @@
 
 Running compiled Taichi kernels in Javascript (powered by WASM)
 
+Preview me at: https://taichi-dev.github.io/taichi.js/
+
 
 ## 1. Compile
 

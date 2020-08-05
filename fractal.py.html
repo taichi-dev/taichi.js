@@ -21,8 +21,8 @@ taichi.ready(function() {
     let canvas = document.getElementById('canvas');
     let gui = new TaichiGUI(canvas, RES);
 
-    let paint = taichi.get('paint_c4_0');
-    let tensor_to_image = taichi.get('tensor_to_image_c10_0');
+    let paint = taichi.get('paint');
+    let tensor_to_image = taichi.get('tensor_to_image');
 
     let frame = 0;
     gui.animation(function() {

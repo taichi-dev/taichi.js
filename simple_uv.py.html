@@ -21,8 +21,8 @@ taichi.ready(function() {
     let canvas = document.getElementById('canvas');
     let gui = new TaichiGUI(canvas, RES);
 
-    let paint = taichi.get('paint_c4_0');
-    let vector_to_image = taichi.get('vector_to_image_c12_0');
+    let paint = taichi.get('paint');
+    let vector_to_image = taichi.get('vector_to_image');
 
     paint();
     let extr = taichi.set_ext_arr(0, [RES, RES, 4]);

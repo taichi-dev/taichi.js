@@ -22,9 +22,9 @@ taichi.ready(function() {
     let canvas = document.getElementById('canvas');
     let gui = new TaichiGUI(canvas, RES);
 
-    let matrix_to_ext_arr = taichi.get('matrix_to_ext_arr_c20_0');
-    let substep = taichi.get('substep_c4_0');
-    let init = taichi.get('init_c6_0');
+    let matrix_to_ext_arr = taichi.get('matrix_to_ext_arr');
+    let substep = taichi.get('substep');
+    let init = taichi.get('init');
 
     init();
 

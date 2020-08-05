@@ -22,10 +22,10 @@ taichi.ready(function() {
     let canvas = document.getElementById('canvas');
     let gui = new TaichiGUI(canvas, RES);
 
-    let matrix_to_ext_arr = taichi.get('matrix_to_ext_arr_c30_0');
-    let add_random_particles = taichi.get('add_random_particles_c6_0');
-    let build_tree = taichi.get('build_tree_c8_0');
-    let substep_tree = taichi.get('substep_tree_c12_0');
+    let matrix_to_ext_arr = taichi.get('matrix_to_ext_arr');
+    let add_random_particles = taichi.get('add_random_particles');
+    let build_tree = taichi.get('build_tree');
+    let substep_tree = taichi.get('substep_tree');
 
     for (let i = 0; i < 2048; i++) {
         taichi.set_arg_float(0, 0);

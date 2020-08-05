@@ -105,7 +105,8 @@ class TaichiGUI {
         this.ctx.putImageData(imgData, 0, 0);
     }
 
-    circles(pos) {
+    circles(pos, radius) {
+        radius = radius || 2;
         this.ctx.fillStyle = 'black';
         this.ctx.fillRect(0, 0, this.resx, this.resy);
         this.ctx.fillStyle = 'white';
@@ -113,7 +114,7 @@ class TaichiGUI {
             let x = pos[i++] * RES;
             let y = (1 - pos[i++]) * RES;
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 2, 0, 2 * Math.PI);
+            this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
             this.ctx.fill();
         }
     }

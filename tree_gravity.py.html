@@ -1,0 +1,50 @@
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>tree_gravity | Taichi.js</title>
+    <style>
+    canvas {
+        border: 1px solid black;
+    }
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="512" height="512">no HTML5 support.</canvas>
+    <script src="./taichi.js"></script>
+    <script src="./tree_gravity.py.js"></script>
+    <script>
+let taichi = new Taichi(Module);
+let N = 8192;
+let RES = 512;
+
+taichi.ready(function() {
+
+    let canvas = document.getElementById('canvas');
+    let gui = new TaichiGUI(canvas, RES);
+
+    let matrix_to_ext_arr = taichi.get('matrix_to_ext_arr_c30_0');
+    let add_random_particles = taichi.get('add_random_particles_c6_0');
+    let build_tree = taichi.get('build_tree_c8_0');
+    let substep_tree = taichi.get('substep_tree_c12_0');
+
+    for (let i = 0; i < 2048; i++) {
+        taichi.set_arg_float(0, 0);
+        add_random_particles();
+    }
+
+    let frame = 0;
+    gui.animation(function() {
+        frame++;
+
+        build_tree();
+        substep_tree();
+
+        let extr = taichi.set_ext_arr(0, [N, 2]);
+        matrix_to_ext_arr();
+
+        gui.circles(extr, 1);
+    });
+});
+    </script>
+</body>
+</html>

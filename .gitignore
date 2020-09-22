@@ -1,2 +1,4 @@
 /*.py.yml
 /*.py.c
+/.vscode
+__pycache__/

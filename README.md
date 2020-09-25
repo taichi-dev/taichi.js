@@ -10,7 +10,7 @@ Preview me at: https://taichi-dev.github.io/taichi.js/
 To compile a existing Taichi/Python program, say `mpm88.py`, into Javascript:
 
 ```bash
-./compile.py mpm88.py
+python -m taichihub compile examples/mpm88.py
 ```
 
 A GUI will shows up, please **close it** after showing a image so that the process could continue.
@@ -69,7 +69,8 @@ mpm88.ready(function() {
 You need to set up a basic HTTP server to make WASM functional:
 
 ```bash
-python server.py
+cd examples
+python3 -m http.server 8080
 ```
 
-It will shows an URL, open it in the browser, and you will browse several ``xxx.py.html``'s, choose the one you desire to play, and enjoy!
+Then open https://127.0.0.1:8080 in the browser, and you will see several ``xxx.py.html``'s, choose the one you desire to play, and enjoy!

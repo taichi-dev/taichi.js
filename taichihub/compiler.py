@@ -1,8 +1,20 @@
+#!/usr/bin/env python3
+
 import subprocess
 import tempfile
+import sys
 import os
 
-from . import repo_root
+
+def do_compile(program):
+    print('Generating action record...')
+    env = dict(os.environ)
+    env.update({'TI_ACTION_RECORD': f'{program}.yml', 'TI_ARCH': 'cc'})
+    subprocess.check_call([sys.executable, program], env=env)
+    print('Composing C file...')
+    subprocess.check_output([sys.executable, '-m', 'taichi', 'cc_compose', '-e', f'{program}.yml', f'{program}.c', f'{program}.h'])
+    print('Compiling via Emscripten...')
+    subprocess.check_call(['emcc', '-O3', f'{program}.c', '-o', f'{program}.js'])
 
 
 def compile_code(source):
@@ -15,10 +27,14 @@ def compile_code(source):
             f.write(source)
 
         print('compiling', main_py)
-        subprocess.check_call(['python', os.path.join(repo_root, 'compile.py'), main_py])
+        do_compile(main_py)
         print('done with', main_py)
 
         with open(main_js, 'r') as f:
             js_code = f.read()
 
         return js_code
+
+
+if __name__ == '__main__':
+    do_compile(sys.argv[1])

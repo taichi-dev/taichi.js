@@ -2,36 +2,71 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Taichi.js | Online compiler</title>
+        <title>Taichi.js | Playground</title>
 
         <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
         <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/css/mdui.min.css"/>
+
+        <style>
+        .canvas {
+            align: center;
+        }
+        </style>
     </head>
 
     <body class="mdui-theme-layout-auto mdui-theme-accent-pink mdui-theme-primary-indigo">
         <div class="mdui-toolbar mdui-color-theme">
-  <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">menu</i></a>
-  <span class="mdui-typo-title">Taichi.js online compiler</span>
-  <div class="mdui-toolbar-spacer"></div>
-  <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">search</i></a>
-  <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">refresh</i></a>
-  <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">more_vert</i></a>
-</div>
+            <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">menu</i></a>
+            <span class="mdui-typo-title">Taichi.js Playground</span>
+            <div class="mdui-toolbar-spacer"></div>
+            <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">search</i></a>
+            <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">refresh</i></a>
+            <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">more_vert</i></a>
+        </div>
 
-        <div class="mdui-container">
-            <div class="mdui-textfield mdui-textfield-floating-label">
-                <textarea class="mdui-textfield-input" rows="25" placeholder="Code here" id="text-code">
+        <div class="mdui-container mdui-m-t-2">
+
+            <div class="mdui-row">
+                <div class="mdui-card mdui-col-xs-6 mdui-m-l-1 mdui-m-r-1">
+                      <div class="mdui-card-media">
+                        <div class="mdui-textfield mdui-textfield-floating-label">
+                            <textarea class="mdui-textfield-input" rows="24" placeholder="Code here" id="text-code">
 import taichi as ti
 ti.init()
+#####################################
+
+img = ti.Vector.field(3, float, (512, 512))
 
 @ti.kernel
-def func():
-    print(233)
+def paint():
+    for i, j in img:
+        img[i, j] = [i / 512, j / 512, 0.5]
 
-func()</textarea>
+paint()
+
+#####################################
+gui = ti.GUI(show_gui=False)
+gui.set_image(img)
+</textarea>
+
+                        </div>
+                    </div>
+
+                    <div class="mdui-card-actions">
+                        <button class="mdui-btn mdui-btn-raised mdui-hoverable mdui-ripple mdui-color-theme-accent" id="button-run">Run</button>
+                    </div>
+                </div>
+
+                <div class="mdui-card mdui-col-xs-5 mdui-m-l-1 mdui-m-r-1">
+                  <div class="mdui-card-media">
+                    <canvas class="mdui-img-fluid mdui-img-rounded mdui-center mdui-valign mdui-m-t-1" id="canvas" height="512" width="512">HTML5 not supported on your browser :(</canvas>
+                  </div>
+                  <div class="mdui-card-actions">
+                    <button class="mdui-btn mdui-ripple">Save</button>
+                    <button class="mdui-btn mdui-ripple">Share</button>
+                  </div>
+                </div>
             </div>
-
-            <button class="mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme-accent" id="button-run">Run</button>
 
             <div class="mdui-textfield mdui-textfield-floating-label">
                 <textarea class="mdui-textfield-input" rows="25" placeholder="Output will be displayed here" id="text-output" disabled></textarea>
@@ -39,16 +74,37 @@ func()</textarea>
         </div>
 
         <script src="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/js/mdui.min.js"></script>
+        <script src="/taichi.js"></script>
 
         <script>
         $(function() {
+            var canvas = document.getElementById('canvas');
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'indigo';
+            ctx.fillRect(0, 0, 512, 512);
+
             function loadScript(url) {
                 $.ajax({
                     url: url,
                     datatype: 'script',
                     success: function(res) {
                         console.log('Successfully loaded:', url);
-                        console.log(Module);
+                        var program = new Taichi(Module);
+
+                        program.ready(function() {
+                            let canvas = document.getElementById('canvas');
+                            let gui = new TaichiGUI(canvas, 512);
+
+                            let paint = program.get('paint');
+                            let vector_to_image = program.get('vector_to_image');
+
+                            paint();
+                            let extr = program.set_ext_arr(0, [512, 512, 4]);
+                            vector_to_image();
+
+                            console.log(extr);
+                            gui.set_image(extr);
+                        });
                     },
                     error: function(xmlhr, err, exc) {
                         alert('Error loading compiled script:', err, exc);

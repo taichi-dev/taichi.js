@@ -100,11 +100,11 @@ class TaichiGUI {
     }
 
     set_image(image) {
-        let imgData = this.ctx.createImageData(RES, RES);
-        for (let y = 0; y < RES; y++) {
-            for (let x = 0; x < RES; x++) {
-                let i = (y * RES + x) * 4;
-                let j = (x * RES + (RES - 1 - y)) * 4;
+        let imgData = this.ctx.createImageData(this.resx, this.resy);
+        for (let y = 0; y < this.resy; y++) {
+            for (let x = 0; x < this.resx; x++) {
+                let i = (y * this.resx + x) * 4;
+                let j = (x * this.resy + (this.resy - 1 - y)) * 4;
                 imgData.data[i++] = parseInt(image[j++] * 255);
                 imgData.data[i++] = parseInt(image[j++] * 255);
                 imgData.data[i++] = parseInt(image[j++] * 255);
@@ -120,8 +120,8 @@ class TaichiGUI {
         this.ctx.fillRect(0, 0, this.resx, this.resy);
         this.ctx.fillStyle = 'white';
         for (let i = 0; i < pos.length;) {
-            let x = pos[i++] * RES;
-            let y = (1 - pos[i++]) * RES;
+            let x = pos[i++] * this.resx;
+            let y = (1 - pos[i++]) * this.resy;
             this.ctx.beginPath();
             this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
             this.ctx.fill();

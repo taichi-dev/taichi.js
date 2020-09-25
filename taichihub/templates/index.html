@@ -1,9 +1,82 @@
 <!doctype html>
-<title>Taichi.js | Online compiler</title>
-<h2>Taichi.js online compiler!</h2>
-<hr>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Taichi.js | Online compiler</title>
 
-<form action="upload" method="POST">
-    <textarea rows="25" cols="80" name="code"></textarea><br>
-    <input type="submit" value="Submit"><br>
-</form>
+        <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+        <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/css/mdui.min.css"/>
+    </head>
+
+    <body class="mdui-theme-layout-auto mdui-theme-accent-pink mdui-theme-primary-indigo">
+        <div class="mdui-toolbar mdui-color-theme">
+  <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">menu</i></a>
+  <span class="mdui-typo-title">Taichi.js online compiler</span>
+  <div class="mdui-toolbar-spacer"></div>
+  <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">search</i></a>
+  <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">refresh</i></a>
+  <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">more_vert</i></a>
+</div>
+
+        <div class="mdui-container">
+            <div class="mdui-textfield mdui-textfield-floating-label">
+                <textarea class="mdui-textfield-input" rows="25" placeholder="Code here" id="text-code">
+import taichi as ti
+ti.init()
+
+@ti.kernel
+def func():
+    print(233)
+
+func()</textarea>
+            </div>
+
+            <button class="mdui-btn mdui-btn-raised mdui-ripple mdui-color-theme-accent" id="button-run">Run</button>
+
+            <div class="mdui-textfield mdui-textfield-floating-label">
+                <textarea class="mdui-textfield-input" rows="25" placeholder="Output will be displayed here" id="text-output" disabled></textarea>
+            </div>
+        </div>
+
+        <script src="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/js/mdui.min.js"></script>
+
+        <script>
+        $(function() {
+            function loadScript(url) {
+                $.ajax({
+                    url: url,
+                    datatype: 'script',
+                    success: function(res) {
+                        console.log('Successfully loaded:', url);
+                        console.log(Module);
+                    },
+                    error: function(xmlhr, err, exc) {
+                        alert('Error loading compiled script:', err, exc);
+                    },
+                });
+            }
+
+            $('#button-run').click(function() {
+                $('#text-output').val('Compiling...');
+                var code = $('#text-code').val();
+                $.ajax({
+                    type: 'POST',
+                    url: '/upload',
+                    data: {code: code},
+                    datatype: 'json',
+                    success: function(res) {
+                        console.log('Server compile result:', res);
+                        $('#text-output').val(res.output);
+                        if (res.status == 'success') {
+                            loadScript(res.javascript);
+                        }
+                    },
+                    error: function(xmlhr, err, exc) {
+                        alert('Error connecting server:', err, exc);
+                    },
+                });
+            });
+        });
+        </script>
+    </body>
+</html>

@@ -2,3 +2,5 @@
 /*.py.c
 /.vscode
 __pycache__/
+taichihub/cache/
+.*.swp

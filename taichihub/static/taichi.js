@@ -57,7 +57,7 @@ class Taichi {
             }
         }
         if (typeof ret == 'undefined') {
-            console.error('Undefined Taichi kernel:', name);
+            return undefined;
         }
         return function() {
             return ret(this.module._Ti_ctx);

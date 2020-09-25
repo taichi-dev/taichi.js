@@ -38,11 +38,11 @@ ti.init()
 img = ti.Vector.field(3, float, (512, 512))
 
 @ti.kernel
-def paint():
+def paint(t: float):
     for i, j in img:
-        img[i, j] = [i / 512, j / 512, 0.5]
+        img[i, j] = ti.cos(ti.Vector([i / 512, j / 512 + 2, i / 512 + 4]) + t) * 0.5 + 0.5
 
-paint()
+paint(0)
 
 #####################################
 gui = ti.GUI(show_gui=False)
@@ -83,6 +83,26 @@ gui.set_image(img)
             ctx.fillStyle = 'indigo';
             ctx.fillRect(0, 0, 512, 512);
 
+            function playTemplateSetImage(program) {
+                let canvas = document.getElementById('canvas');
+                let gui = new TaichiGUI(canvas, 512);
+
+                let paint = program.get('paint') || program.get('render');
+                let vector_to_image = program.get('vector_to_image') || program.get('tensor_to_image');
+
+                let frame = 0;
+                gui.animation(function() {
+                    frame++;
+
+                    program.set_arg_float(0, frame * 0.04);
+                    paint();
+                    let extr = program.set_ext_arr(0, [gui.resx, gui.resy, 4]);
+                    vector_to_image();
+
+                    gui.set_image(extr);
+                });
+            }
+
             function loadScript(url) {
                 $.ajax({
                     url: url,
@@ -92,18 +112,7 @@ gui.set_image(img)
                         var program = new Taichi(Module);
 
                         program.ready(function() {
-                            let canvas = document.getElementById('canvas');
-                            let gui = new TaichiGUI(canvas, 512);
-
-                            let paint = program.get('paint');
-                            let vector_to_image = program.get('vector_to_image');
-
-                            paint();
-                            let extr = program.set_ext_arr(0, [512, 512, 4]);
-                            vector_to_image();
-
-                            console.log(extr);
-                            gui.set_image(extr);
+                            playTemplateSetImage(program);
                         });
                     },
                     error: function(xmlhr, err, exc) {

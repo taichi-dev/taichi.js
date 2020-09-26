@@ -9,7 +9,7 @@ import os
 docker_image = 'taichihub'
 
 
-def do_compile(target, source=None):
+def do_compile(target, source=None, extra=[]):
     if source is None:
         source = target
 
@@ -21,6 +21,8 @@ def do_compile(target, source=None):
                 '-e', 'TI_ACTION_RECORD=/app/main.py.yml', '-e', 'TI_ARCH=cc',
                 docker_image, 'python', 'main.py']).decode().strip()
         subprocess.check_call(['docker', 'cp', source, container + ':/app/main.py'])
+        for e in extra:
+            subprocess.check_call(['docker', 'cp', e, container + ':/app/' + os.path.basename(e)])
         try:
             output = subprocess.check_output(['docker', 'start', '-a', container],
                 stderr=subprocess.STDOUT, timeout=8)

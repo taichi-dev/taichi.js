@@ -11,7 +11,7 @@ def index():
 
 @app.route('/')
 @app.route('/help')
-def help():
+def help_():
     return render_template('help.html')
 
 

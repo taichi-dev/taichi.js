@@ -46,22 +46,13 @@ import hub
 
 img = ti.Vector.field(3, float, (512, 512))
 
-@ti.kernel
+@hub.kernel
 def render(t: float):
     for i, j in img:
         a = ti.Vector([i / 512, j / 512 + 2, i / 512 + 4])
         img[i, j] = ti.cos(a + t) * 0.5 + 0.5
 
-
-@ti.kernel
-def hub_get_image(imgout: ti.ext_arr()):
-    for I in ti.grouped(img):
-        for j in ti.static(range(3)):
-            imgout[I, j] = img[I][j]
-
-
-render(0)
-hub_get_image(np.empty((*img.shape, 4), dtype=np.float32))
+hub.bind_image(img)
 </textarea>
 
                         </div>
@@ -137,6 +128,8 @@ hub_get_image(np.empty((*img.shape, 4), dtype=np.float32))
 
         var taichihub;
 
+        var frontend = " ";
+
         $(function() {
             editor.setSize('100%', 496);
 
@@ -153,33 +146,31 @@ hub_get_image(np.empty((*img.shape, 4), dtype=np.float32))
                 }
 
                 play() {
-                    let program = this.program;
-
                     this.frame = 0;
 
                     let canvas = document.getElementById('canvas');
                     this.gui = new TaichiGUI(canvas, 512);
 
-                    this.reset = program.get('reset');
-                    this.substep = program.get('substep');
-                    this.render = program.get('render');
+                    this.reset = this.program.get('reset');
+                    this.substep = this.program.get('substep');
+                    this.render = this.program.get('render');
 
-                    let substep_steps = program.get('hub_get_substep_steps');
-                    if (typeof substep_steps != 'undefined') {
-                        substep_steps();
-                        this.substep_steps = program.get_ret_int(0);
+                    let substep_nr = this.program.get('hub_get_substep_nr');
+                    if (typeof substep_nr != 'undefined') {
+                        substep_nr();
+                        this.substep_nr = this.program.get_ret_int(0);
                     } else {
-                        this.substep_steps = 1;
+                        this.substep_nr = 1;
                     }
 
                     this.scene_type = undefined;
                     this.export_data = undefined;
                     if (typeof this.export_data == 'undefined') {
-                        this.export_data = program.get('hub_get_image');
+                        this.export_data = this.program.get('hub_get_image');
                         this.scene_type = 'image';
                     }
                     if (typeof this.export_data == 'undefined') {
-                        this.export_data = program.get('hub_get_particles');
+                        this.export_data = this.program.get('hub_get_particles');
                         this.scene_type = 'particles';
                     }
                     if (typeof this.render == 'undefined' && typeof this.substep == 'undefined') {
@@ -192,7 +183,7 @@ hub_get_image(np.empty((*img.shape, 4), dtype=np.float32))
                     if (typeof this.reset != 'undefined') {
                         this.reset();
                     }
-                    this.onUpdate();
+                    this.onReset();
 
                     this.fps = 0;
                     this.last_time = Date.now();
@@ -202,7 +193,9 @@ hub_get_image(np.empty((*img.shape, 4), dtype=np.float32))
                 onUpdate() {
                     this.program.set_arg_float(0, this.frame * 0.04);
                     if (typeof this.substep != 'undefined') {
-                        this.substep();
+                        for (var i = 0; i < this.substep_nr; i++) {
+                            this.substep();
+                        }
                     }
                     if (typeof this.render != 'undefined') {
                         this.render();
@@ -269,10 +262,10 @@ hub_get_image(np.empty((*img.shape, 4), dtype=np.float32))
 
                 onRun() {
                     $('#label-status').html('compiling');
-                    var code = $('#text-code').val();
+                    var code = editor.getValue();
                     $.ajax({
                         type: 'POST',
-                        url: '/upload',
+                        url: '/compile',
                         data: {code: code},
                         datatype: 'json',
                         success: function(res) {

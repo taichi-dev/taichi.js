@@ -94,7 +94,6 @@ class TaichiGUI {
     }
 
     animation(callback) {
-
         function wrapped() {
             window.requestAnimationFrame(wrapped);
             //setTimeout(wrapped, 1000 / 60);

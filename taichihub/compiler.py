@@ -16,29 +16,28 @@ def do_compile(target, source=None):
 
     print('Generating action record...')
     env = dict(os.environ)
-    env.update({'TI_ACTION_RECORD': f'{target}.yml', 'TI_ARCH': 'cc'})
+    env.update({'TI_ACTION_RECORD': f'{source}.yml', 'TI_ARCH': 'cc',
+                'PYTHONPATH': os.path.join(os.path.dirname(__file__), 'modules')})
     try:
-        output = subprocess.check_output([sys.executable, '-m', 'taichi', 'run', source],
+        output = subprocess.check_output([sys.executable, source],
             env=env, stderr=subprocess.STDOUT, timeout=8)
     except subprocess.CalledProcessError as e:
         print('Error while generating action record:')
         print(e.output)
         print('(END)')
-        os.unlink(f'{target}.yml')
         return e.output, 'failure'
     except subprocess.TimeoutExpired as e:
         print('Timeout while generating action record:')
         print(e.output)
         print('(END)')
-        os.unlink(f'{target}.yml')
         return e.output + '\n(Time limit exceed)', 'timeout'
 
     print('Composing C file...')
     subprocess.check_call([sys.executable, '-m', 'taichi', 'cc_compose',
-        '-e', f'{target}.yml', f'{target}.c', f'{target}.h'])
+        '-e', f'{source}.yml', f'{source}.c', f'{source}.h'])
 
     print('Compiling via Emscripten...')
-    subprocess.check_call(['emcc', '-O3', f'{target}.c', '-o', f'{target}.js'])
+    subprocess.check_call(['emcc', '-O3', f'{source}.c', '-o', f'{target}.js'])
 
     # https://stackoverflow.com/questions/38769103/document-currentscript-is-null
     # AJAX loaded Javascript doesn't seems support document.currentScript.src,
@@ -50,10 +49,6 @@ def do_compile(target, source=None):
     with open(f'{target}.js', 'w') as f:
         f.write(s)
 
-    os.unlink(f'{target}.yml')
-    os.unlink(f'{target}.h')
-    os.unlink(f'{target}.c')
-
     return output, 'success'
 
 
@@ -64,10 +59,16 @@ def get_random_string(length):
     return ''.join(random.choice(letters) for i in range(length))
 
 
-def compile_code(cachedir, source):
+def compile_code(app, source):
+    cachedir = os.path.join(app.root_path, 'cache')
+    if not os.path.exists(cachedir):
+        os.mkdir(cachedir)
+
     cacheid = '0.' + get_random_string(10)
 
     with tempfile.TemporaryDirectory() as tmpdir:
+        os.chmod(tmpdir, 0o777)
+
         src = os.path.join(tmpdir, 'main.py')
         dst = os.path.join(cachedir, f'{cacheid}')
 

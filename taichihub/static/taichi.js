@@ -80,19 +80,10 @@ class TaichiGUI {
     }
 
     animation(callback) {
-        let fps = 0;
-        let last_time = Date.now();
 
         function wrapped() {
             window.requestAnimationFrame(wrapped);
             //setTimeout(wrapped, 1000 / 60);
-
-            if((Date.now() - last_time) >= 1000) {
-                console.log(fps, 'FPS');
-                last_time = Date.now();
-                fps = 0;
-            }
-            fps++;
 
             callback();
         }

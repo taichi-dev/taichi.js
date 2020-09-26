@@ -32,38 +32,37 @@
                         <div class="mdui-textfield mdui-textfield-floating-label">
                             <textarea class="mdui-textfield-input" rows="24" placeholder="Code here" id="text-code">
 import taichi as ti
-ti.init()
-#####################################
+import hub
 
 img = ti.Vector.field(3, float, (512, 512))
 
-@ti.kernel
+@hub.kernel
 def paint(t: float):
     for i, j in img:
         img[i, j] = ti.cos(ti.Vector([i / 512, j / 512 + 2, i / 512 + 4]) + t) * 0.5 + 0.5
 
-paint(0)
-
-#####################################
-gui = ti.GUI(show_gui=False)
-gui.set_image(img)
+hub.bind_image(img)
 </textarea>
 
                         </div>
                     </div>
 
-                    <div class="mdui-card-actions">
-                        <button class="mdui-btn mdui-btn-raised mdui-hoverable mdui-ripple mdui-color-theme-accent" id="button-run">Run</button>
+                    <div class="mdui-card-actions mdui-m-t-1 mdui-m-b-1">
+                        <button class="mdui-btn mdui-btn-raised mdui-hoverable mdui-ripple mdui-color-theme-accent" id="button-run"><i class="mdui-icon material-icons">play_arrow</i></button>
                     </div>
                 </div>
 
                 <div class="mdui-card mdui-col-xs-5 mdui-m-l-1 mdui-m-r-1">
                   <div class="mdui-card-media">
-                    <canvas class="mdui-img-fluid mdui-img-rounded mdui-center mdui-valign mdui-m-t-1" id="canvas" height="512" width="512">HTML5 not supported on your browser :(</canvas>
+                    <canvas class="mdui-img-fluid mdui-img-rounded mdui-center mdui-valign mdui-m-t-1" id="canvas" height="512" width="512">HTML5 is not supported on your browser :(</canvas>
                   </div>
-                  <div class="mdui-card-actions">
-                    <button class="mdui-btn mdui-ripple">Save</button>
-                    <button class="mdui-btn mdui-ripple">Share</button>
+                  <div class="mdui-card-actions mdui-m-t-1 mdui-m-b-1">
+                    <button class="mdui-btn mdui-btn-icon mdui-btn-raised mdui-hoverable mdui-ripple mdui-float-left" id="button-pause"><i class="mdui-icon material-icons" id="icon-pause">pause</i></button>
+                    <div class="mdui-chip mdui-float-left">
+                        <span class="mdui-chip-title" id="label-fps">-- FPS</span>
+                    </div>
+                    <button class="mdui-btn mdui-btn-icon mdui-float-right"><i class="mdui-icon material-icons">share</i></button>
+                    <button class="mdui-btn mdui-btn-icon mdui-float-right"><i class="mdui-icon material-icons">save</i></button>
                   </div>
                 </div>
             </div>
@@ -83,23 +82,64 @@ gui.set_image(img)
             ctx.fillStyle = 'indigo';
             ctx.fillRect(0, 0, 512, 512);
 
-            function playTemplateSetImage(program) {
+            var paused = false;
+
+            function playProgram(program) {
                 let canvas = document.getElementById('canvas');
                 let gui = new TaichiGUI(canvas, 512);
 
-                let paint = program.get('paint') || program.get('render');
-                let vector_to_image = program.get('vector_to_image') || program.get('tensor_to_image');
+                let substep = program.get('substep') || program.get('advance');
+                let render = program.get('render') || program.get('paint');
 
+                let scene_type = undefined, export_data = undefined;
+                if (typeof export_data == 'undefined') {
+                    export_data = program.get('vector_to_image') || program.get('tensor_to_image');
+                    scene_type = 'image';
+                }
+                if (typeof export_data == 'undefined') {
+                    export_data = program.get('matrix_to_ext_arr');
+                    export_data = program.get('matrix_to_ext_arr');
+                    scene_type = 'particles';
+                }
+                if (typeof render == 'undefined' && typeof substep == 'undefined') {
+                    console.error('Cannot find the kernel to render / step data!');
+                }
+                if (typeof export_data == 'undefined') {
+                    console.error('Cannot find the kernel to export data!');
+                }
+
+                let fps = 0;
                 let frame = 0;
+                let last_time = Date.now();
                 gui.animation(function() {
+                    if (paused)
+                        return;
+
+                    if((Date.now() - last_time) >= 1000) {
+                        $('#label-fps').html(fps + ' FPS');
+                        last_time = Date.now();
+                        fps = 0;
+                    }
                     frame++;
+                    fps++;
 
                     program.set_arg_float(0, frame * 0.04);
-                    paint();
-                    let extr = program.set_ext_arr(0, [gui.resx, gui.resy, 4]);
-                    vector_to_image();
+                    if (typeof substep != 'undefined') {
+                        substep();
+                    }
+                    if (typeof render != 'undefined') {
+                        render();
+                    }
 
-                    gui.set_image(extr);
+                    if (scene_type == 'image') {
+                        let extr = program.set_ext_arr(0, [gui.resx, gui.resy, 4]);
+                        export_data();
+                        gui.set_image(extr);
+                    } else if (scene_type == 'particles') {
+                        let extr = program.set_ext_arr(0, [8192, 2]);
+                        export_data();
+                        gui.circles(extr);
+                    }
                 });
             }
 
@@ -112,7 +152,7 @@ gui.set_image(img)
                         var program = new Taichi(Module);
 
                         program.ready(function() {
-                            playTemplateSetImage(program);
+                            playProgram(program);
                         });
                     },
                     error: function(xmlhr, err, exc) {
@@ -120,6 +160,13 @@ gui.set_image(img)
                     },
                 });
             }
+
+            loadScript('/cache/default_scene.js');
+
+            $('#button-pause').click(function() {
+                paused = !paused;
+                $('#icon-pause').html(paused ? 'pause' : 'play_arrow');
+            });
 
             $('#button-run').click(function() {
                 $('#text-output').val('Compiling...');

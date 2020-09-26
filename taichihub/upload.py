@@ -44,6 +44,10 @@ def get_random_string(length):
 def compile_code(source):
     from .compiler import do_compile
 
+    print('Compiling code:')
+    print(source)
+    print('(END)')
+
     cachedir = os.path.join(app.root_path, 'cache')
     if not os.path.exists(cachedir):
         os.mkdir(cachedir)

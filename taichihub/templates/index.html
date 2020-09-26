@@ -41,16 +41,27 @@
                         <div class="mdui-textfield mdui-textfield-floating-label">
                             <textarea class="mdui-textfield-input" rows="24" placeholder="Code here" id="text-code">
 import taichi as ti
+import numpy as np
 import hub
 
 img = ti.Vector.field(3, float, (512, 512))
 
-@hub.kernel
-def paint(t: float):
+@ti.kernel
+def render(t: float):
     for i, j in img:
-        img[i, j] = ti.cos(ti.Vector([i / 512, j / 512 + 2, i / 512 + 4]) + t) * 0.5 + 0.5
+        a = ti.Vector([i / 512, j / 512 + 2, i / 512 + 4])
+        img[i, j] = ti.cos(a + t) * 0.5 + 0.5
 
-hub.bind_image(img)
+
+@ti.kernel
+def hub_get_image(imgout: ti.ext_arr()):
+    for I in ti.grouped(img):
+        for j in ti.static(range(3)):
+            imgout[I, j] = img[I][j]
+
+
+render(0)
+hub_get_image(np.empty((*img.shape, 4), dtype=np.float32))
 </textarea>
 
                         </div>
@@ -59,7 +70,7 @@ hub.bind_image(img)
                     <div class="mdui-card-actions mdui-m-t-1 mdui-m-b-1">
                         <button class="mdui-btn mdui-btn-raised mdui-icon-left mdui-hoverable mdui-ripple mdui-color-theme-accent mdui-float-left" mdui-tooltip="{content: 'Launch code'}" id="button-run"><i class="mdui-icon material-icons">play_arrow</i> Run</button>
                         <div class="mdui-chip mdui-float-left mdui-valign">
-                            <span class="mdui-chip-title" mdui-tooltip="{content: 'Server status'}" id="label-status">idle</span>
+                            <span class="mdui-chip-title" mdui-tooltip="{content: 'Server status'}" id="label-status">ready</span>
                         </div>
                     </div>
                 </div>
@@ -124,137 +135,163 @@ hub.bind_image(img)
             },
         });
 
+        var taichihub;
+
         $(function() {
             editor.setSize('100%', 496);
 
-            var canvas = document.getElementById('canvas');
-            var ctx = canvas.getContext('2d');
+            class TaichiHub {
+                constructor() {
+                    this.paused = false;
+                    this.frame = 0;
 
-            var paused = false;
-            var frame = 0;
+                    //this.loadScript('/cache/default_scene.js');
 
-            function playProgram(program) {
-                frame = 0;
-
-                let canvas = document.getElementById('canvas');
-                let gui = new TaichiGUI(canvas, 512);
-
-                let reset = program.get('reset') || program.get('init');
-                let substep = program.get('substep') || program.get('advance');
-                let render = program.get('render') || program.get('paint');
-
-                let scene_type = undefined, export_data = undefined;
-                if (typeof export_data == 'undefined') {
-                    export_data = program.get('vector_to_image') || program.get('tensor_to_image');
-                    scene_type = 'image';
-                }
-                if (typeof export_data == 'undefined') {
-                    export_data = program.get('matrix_to_ext_arr');
-                    export_data = program.get('matrix_to_ext_arr');
-                    scene_type = 'particles';
-                }
-                if (typeof render == 'undefined' && typeof substep == 'undefined') {
-                    console.error('Cannot find the kernel to render / step data!');
-                }
-                if (typeof export_data == 'undefined') {
-                    console.error('Cannot find the kernel to export data!');
+                    $('#button-pause').click(this.onPause.bind(this));
+                    $('#button-reset').click(this.onReset.bind(this));
+                    $('#button-run').click(this.onRun.bind(this));
                 }
 
-                if (typeof reset != 'undefined') {
-                    reset();
+                play() {
+                    let program = this.program;
+
+                    this.frame = 0;
+
+                    let canvas = document.getElementById('canvas');
+                    this.gui = new TaichiGUI(canvas, 512);
+
+                    this.reset = program.get('reset');
+                    this.substep = program.get('substep');
+                    this.render = program.get('render');
+
+                    let substep_steps = program.get('hub_get_substep_steps');
+                    if (typeof substep_steps != 'undefined') {
+                        substep_steps();
+                        this.substep_steps = program.get_ret_int(0);
+                    } else {
+                        this.substep_steps = 1;
+                    }
+
+                    this.scene_type = undefined;
+                    this.export_data = undefined;
+                    if (typeof this.export_data == 'undefined') {
+                        this.export_data = program.get('hub_get_image');
+                        this.scene_type = 'image';
+                    }
+                    if (typeof this.export_data == 'undefined') {
+                        this.export_data = program.get('hub_get_particles');
+                        this.scene_type = 'particles';
+                    }
+                    if (typeof this.render == 'undefined' && typeof this.substep == 'undefined') {
+                        console.error('Cannot find the kernel to render / step data!');
+                    }
+                    if (typeof this.export_data == 'undefined') {
+                        console.error('Cannot find the kernel to export data!');
+                    }
+
+                    if (typeof this.reset != 'undefined') {
+                        this.reset();
+                    }
+                    this.onUpdate();
+
+                    this.fps = 0;
+                    this.last_time = Date.now();
+                    this.gui.animation(this.perFrame.bind(this));
                 }
 
-                let fps = 0;
-                let last_time = Date.now();
-                gui.animation(function perFrame() {
-                    if (paused)
+                onUpdate() {
+                    this.program.set_arg_float(0, this.frame * 0.04);
+                    if (typeof this.substep != 'undefined') {
+                        this.substep();
+                    }
+                    if (typeof this.render != 'undefined') {
+                        this.render();
+                    }
+
+                    if (this.scene_type == 'image') {
+                        let extr = this.program.set_ext_arr(0, [this.gui.resx, this.gui.resy, 4]);
+                        this.export_data();
+                        this.gui.set_image(extr);
+                    } else if (this.scene_type == 'particles') {
+                        let extr = this.program.set_ext_arr(0, [0, 2]);
+                        this.export_data();
+                        this.program.get_ret_float(0);
+                        this.gui.circles(extr);
+                    }
+                }
+
+                perFrame() {
+                    if (this.paused)
                         return;
 
-                    if((Date.now() - last_time) >= 1000) {
-                        $('#label-fps').html(fps + ' FPS');
-                        last_time = Date.now();
-                        fps = 0;
+                    if((Date.now() - this.last_time) >= 1000) {
+                        $('#label-fps').html(this.fps + ' FPS');
+                        this.last_time = Date.now();
+                        this.fps = 0;
                     }
-                    fps++;
-
-                    program.set_arg_float(0, frame * 0.04);
-                    if (typeof substep != 'undefined') {
-                        substep();
-                    }
-                    if (typeof render != 'undefined') {
-                        render();
-                    }
-
-                    if (scene_type == 'image') {
-                        let extr = program.set_ext_arr(0, [gui.resx, gui.resy, 4]);
-                        export_data();
-                        gui.set_image(extr);
-                    } else if (scene_type == 'particles') {
-                        let extr = program.set_ext_arr(0, [8192, 2]);
-                        export_data();
-                        gui.circles(extr);
-                    }
-
-                    frame++;
-                });
-            }
-
-            function loadScript(url) {
-                $.ajax({
-                    url: url,
-                    datatype: 'script',
-                    success: function(res) {
-                        $('#label-status').html('succeed');
-                        console.log('Successfully loaded:', url);
-                        var program = new Taichi(Module);
-
-                        program.ready(function() {
-                            playProgram(program);
-                        });
-                    },
-                    error: function(xmlhr, err, exc) {
-                        $('#label-status').html('error');
-                        alert('Error loading compiled script!', err, exc);
-                    },
-                });
-            }
-
-            loadScript('/cache/default_scene.js');
-
-            $('#button-pause').click(function() {
-                paused = !paused;
-                $('#icon-pause').html(paused ? 'play_arrow' : 'pause');
-            });
-
-            $('#button-reset').click(function() {
-                frame = 0;
-                if (typeof reset != 'undefined') {
-                    reset();
+                    this.onUpdate();
+                    this.fps++;
+                    this.frame++;
                 }
-            });
 
-            $('#button-run').click(function() {
-                $('#label-status').html('compiling');
-                var code = $('#text-code').val();
-                $.ajax({
-                    type: 'POST',
-                    url: '/upload',
-                    data: {code: code},
-                    datatype: 'json',
-                    success: function(res) {
-                        console.log('Server compile result:', res);
-                        $('#label-status').html(res.status);
-                        $('#text-output').val(res.output);
-                        if (res.status == 'success') {
-                            loadScript(res.javascript);
-                        }
-                    },
-                    error: function(xmlhr, err, exc) {
-                        $('#label-status').html('error');
-                        alert('Error requesting server!', err, exc);
-                    },
-                });
-            });
+                loadScript(url) {
+                    $.ajax({
+                        url: url,
+                        datatype: 'script',
+                        success: function(res) {
+                            $('#label-status').html('succeed');
+                            console.log('Successfully loaded:', url);
+                            this.program = new Taichi(Module);
+
+                            this.program.ready(function() {
+                                this.play(this.program);
+                            }.bind(this));
+                        }.bind(this),
+                        error: function(xmlhr, err, exc) {
+                            $('#label-status').html('error');
+                            alert('Error loading compiled script!', err, exc);
+                        },
+                    });
+                }
+
+                onPause() {
+                    this.paused = !this.paused;
+                    $('#icon-pause').html(this.paused ? 'play_arrow' : 'pause');
+                }
+
+                onReset() {
+                    this.frame = 0;
+                    if (typeof this.reset != 'undefined') {
+                        this.reset();
+                    }
+                    this.onUpdate();
+                }
+
+                onRun() {
+                    $('#label-status').html('compiling');
+                    var code = $('#text-code').val();
+                    $.ajax({
+                        type: 'POST',
+                        url: '/upload',
+                        data: {code: code},
+                        datatype: 'json',
+                        success: function(res) {
+                            console.log('Server compile result:', res);
+                            $('#label-status').html(res.status);
+                            $('#text-output').val(res.output);
+                            if (res.status == 'success') {
+                                this.loadScript(res.javascript);
+                            }
+                        }.bind(this),
+                        error: function(xmlhr, err, exc) {
+                            $('#label-status').html('error');
+                            alert('Error requesting server!', err, exc);
+                        },
+                    });
+                }
+            }
+
+            taichihub = new TaichiHub();
         });
         </script>
     </body>

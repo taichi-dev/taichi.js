@@ -26,6 +26,20 @@ class Taichi {
         args[0] = value;
     }
 
+    get_ret_int(index, value) {
+        let args_base = this.module._Ti_args/4 + index * 2;
+        let args = this.module.HEAP32.subarray(args_base, args_base + 1);
+
+        return args[0];
+    }
+
+    get_ret_float(index, value) {
+        let args_base = this.module._Ti_args/4 + index * 2;
+        let args = this.module.HEAPF32.subarray(args_base, args_base + 1);
+
+        return args[0];
+    }
+
     set_ext_arr(index, shape) {
         let earg_base = this.module._Ti_earg/4 + index * 8;
         let extr_base = this.module._Ti_extr/4;

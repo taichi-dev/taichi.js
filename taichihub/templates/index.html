@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <title>Taichi.js | Playground</title>
 
-        <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+        <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
         <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/css/mdui.min.css"/>
         <link href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.35.0/codemirror.min.css" rel="stylesheet">
 
@@ -59,10 +59,11 @@ hub.bind_image(img)
                     </div>
 
                     <div class="mdui-card-actions mdui-m-t-1 mdui-m-b-1">
-                        <button class="mdui-btn mdui-btn-raised mdui-icon-left mdui-hoverable mdui-ripple mdui-color-theme-accent mdui-float-left" mdui-tooltip="{content: 'Launch code'}" id="button-run"><i class="mdui-icon material-icons">play_arrow</i> Run</button>
+                        <button class="mdui-btn mdui-btn-raised mdui-icon-left mdui-hoverable mdui-ripple mdui-color-theme-accent mdui-float-left" mdui-tooltip="{content: 'Launch it!'}" id="button-run"><i class="mdui-icon material-icons">play_arrow</i> Run</button>
                         <div class="mdui-chip mdui-float-left mdui-valign">
-                            <span class="mdui-chip-title" mdui-tooltip="{content: 'Server status'}" id="label-status">ready</span>
+                            <span class="mdui-chip-title" mdui-tooltip="{content: 'Program status'}" id="label-status">idle</span>
                         </div>
+                        <button class="mdui-btn mdui-btn-icon mdui-hoverable mdui-ripple mdui-float-right" mdui-tooltip="{content: 'Save work'}" id="button-save"><i class="mdui-icon material-icons">save</i></button>
                     </div>
                 </div>
 
@@ -75,7 +76,7 @@ hub.bind_image(img)
                     <div class="mdui-chip mdui-float-left mdui-valign mdui-m-l-1">
                         <span class="mdui-chip-title" id="label-fps">-- FPS</span>
                     </div>
-                    <button class="mdui-btn mdui-btn-icon mdui-float-right" mdui-tooltip="{content: 'Reset'}" id="button-reset"><i class="mdui-icon material-icons">refresh</i></button>
+                    <button class="mdui-btn mdui-btn-icon mdui-ripple mdui-float-right" mdui-tooltip="{content: 'Reset simulation'}" id="button-reset"><i class="mdui-icon material-icons">refresh</i></button>
                   </div>
                 </div>
 
@@ -126,9 +127,7 @@ hub.bind_image(img)
             },
         });
 
-        var taichihub;
-
-        var frontend = " ";
+        var taichihub = {};
 
         $(function() {
             editor.setSize('100%', 496);
@@ -137,17 +136,14 @@ hub.bind_image(img)
                 constructor() {
                     this.paused = false;
                     this.frame = 0;
+                }
 
-                    //this.loadScript('/cache/default_scene.js');
-
-                    $('#button-pause').click(this.onPause.bind(this));
-                    $('#button-reset').click(this.onReset.bind(this));
-                    $('#button-run').click(this.onRun.bind(this));
+                terminate() {
+                    if (typeof this.gui != 'undefined')
+                        this.gui.stopped = true;
                 }
 
                 play() {
-                    this.frame = 0;
-
                     let canvas = document.getElementById('canvas');
                     this.gui = new TaichiGUI(canvas, 512);
 
@@ -229,14 +225,19 @@ hub.bind_image(img)
 
                 loadScript(url) {
                     $.ajax({
-                        url: url,
-                        datatype: 'script',
+                        url: url.replace('.js', '_' + Date.now() + '_.js'),
+                        type: 'GET',
+                        dataType: 'text',
                         success: function(res) {
-                            $('#label-status').html('succeed');
+                            $('#label-status').html('loaded');
                             console.log('Successfully loaded:', url);
-                            this.program = new Taichi(Module);
+                            let module = eval('(function mod' + Date.now() + '() { ' + res + '; return Module; })()');
+                            console.log(module);
+                            this.program = new Taichi(module);
 
                             this.program.ready(function() {
+                                console.log('Replaying program...');
+                                $('#label-status').html('ready');
                                 this.play(this.program);
                             }.bind(this));
                         }.bind(this),
@@ -271,9 +272,11 @@ hub.bind_image(img)
                         success: function(res) {
                             console.log('Server compile result:', res);
                             $('#label-status').html(res.status);
-                            $('#text-output').val(res.output);
-                            if (res.status == 'success') {
-                                this.loadScript(res.javascript);
+                            if ('output' in res) {
+                                $('#text-output').val(res.output);
+                            }
+                            if (res.status == 'success' || res.status == 'cached') {
+                                this.loadScript(res.script);
                             }
                         }.bind(this),
                         error: function(xmlhr, err, exc) {
@@ -284,7 +287,19 @@ hub.bind_image(img)
                 }
             }
 
-            taichihub = new TaichiHub();
+            $('#button-pause').click(function() {
+                taichihub.a.onPause();
+            });
+            $('#button-reset').click(function() {
+                taichihub.a.onReset();
+            });
+            $('#button-run').click(function() {
+                if (typeof taichihub.a != 'undefined') {
+                    taichihub.a.terminate();
+                }
+                taichihub.a = new TaichiHub();
+                taichihub.a.onRun();
+            });
         });
         </script>
     </body>

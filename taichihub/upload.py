@@ -12,12 +12,14 @@ import os
 
 @app.route('/cache/<file>')
 def cache(file):
-    if file == 'default_scene.js':
-        return send_from_directory(os.path.join(app.root_path, 'static'), 'default_scene.js')
-    if file == 'default_scene.wasm':
-        return send_from_directory(os.path.join(app.root_path, 'static'), 'default_scene.wasm')
     assert file.startswith('0.'), file
     assert file.endswith('.js') or file.endswith('.wasm') or file.endswith('.py'), file
+    try:
+        beg = file.index('_')
+        end = file[beg + 1:].index('_') + beg + 2
+        file = file[:beg] + file[end:]
+    except ValueError:
+        pass
     return send_from_directory(os.path.join(app.root_path, 'cache'), file)
 
 
@@ -71,9 +73,16 @@ def compile_code(source):
     print(source)
     print('(END)')
 
+    cacheid, dst = get_cache_path(source)
+
+    script = f'/cache/{cacheid}.js'
+    if os.path.exists(dst + '.js'):
+        print('Using cached result in:', dst)
+        ret = {'status': 'cached', 'script': script}
+        return ret
+
     with tempfile.TemporaryDirectory() as tmpdir:
         src = os.path.join(tmpdir, 'main.py')
-        cacheid, dst = get_cache_path(source)
         ext = [os.path.join(app.root_path, 'static', 'hub.py')]
 
         with open(src, 'w') as f:
@@ -86,5 +95,5 @@ def compile_code(source):
         output = output.decode()
         ret = {'status': status, 'output': output}
         if status == 'success':
-            ret['javascript'] = f'/cache/{cacheid}.js'
+            ret['script'] = script
         return ret

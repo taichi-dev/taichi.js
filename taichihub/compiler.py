@@ -51,13 +51,18 @@ def do_compile(target, source=None, extra=[]):
     print('Compiling via Emscripten...')
     subprocess.check_call(['emcc', '-O3', f'{source}.c', '-o', f'{target}.js'])
 
+    with open(f'{target}.js') as f:
+        s = f.read()
     # https://stackoverflow.com/questions/38769103/document-currentscript-is-null
     # AJAX loaded Javascript doesn't seems support document.currentScript.src,
     # which is being used in Emscripten generated JS stub.
     # So we do a quick hack to make AJAX happy:
-    with open(f'{target}.js') as f:
-        s = f.read()
     s = s.replace('var scriptDirectory=""', 'var scriptDirectory="/cache/"', 1)
+    # Keep reloading, don't cache the WASM file:
+    s = s.replace('.wasm";', '_" + Date.now() + "_.wasm";', 1)
+    # https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Modules
+    # Always clean 'Modules' on each load, so that pressing RUN gets RESET too:
+    #s = s.replace('var Module=typeof Module!=="undefined"?Module:{};', 'Module={};', 1)
     with open(f'{target}.js', 'w') as f:
         f.write(s)
 

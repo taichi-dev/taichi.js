@@ -80,8 +80,18 @@ class Taichi {
 
     ready(cb) {
         this.module.onRuntimeInitialized = cb;
+        /*if (Taichi.tiAlreadyReady) {
+            cb();
+            return;
+        }
+        this.module.onRuntimeInitialized = function() {
+            cb();
+            Taichi.tiAlreadyReady = true;
+        };*/
     }
 }
+
+//Taichi.tiAlreadyReady = false;
 
 class TaichiGUI {
     constructor(canvas, resx, resy) {
@@ -91,13 +101,18 @@ class TaichiGUI {
         this.ctx = this.canvas.getContext('2d');
         this.canvas.width = this.resx;
         this.canvas.height = this.resy;
+        this.stopped = false;
     }
 
     animation(callback) {
+        let that = this;
         function wrapped() {
+            if (that.stopped) {
+                return;
+            }
+
             window.requestAnimationFrame(wrapped);
             //setTimeout(wrapped, 1000 / 60);
-
             callback();
         }
         wrapped();

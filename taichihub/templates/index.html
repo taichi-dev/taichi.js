@@ -6,6 +6,7 @@
 
         <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
         <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/css/mdui.min.css"/>
+        <link href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.35.0/codemirror.min.css" rel="stylesheet">
 
         <style>
         .canvas {
@@ -97,17 +98,44 @@ hub.bind_image(img)
         </div>
 
         <script src="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/js/mdui.min.js"></script>
+        <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.35.0/codemirror.min.js"></script>
+        <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.35.0/mode/python/python.min.js"></script>
+        <script src="https://cdn.bootcdn.net/ajax/libs/codemirror/5.35.0/addon/selection/active-line.min.js"></script>
+
         <script src="/taichi.js"></script>
 
         <script>
+        var editor = CodeMirror.fromTextArea(document.getElementById('text-code'), {
+            lineNumbers: true,
+            indentUnit: 4,
+            styleActiveLine: true,
+            matchBrakets: true,
+            mode: 'python',
+            lineWrapping: false,
+            theme: 'default',
+            foldGutter: true,
+            gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+        });
+
+        editor.setOption('extraKeys', {
+            Tab: function(cm) {
+                var spaces = Array(cm.getOption('identUnit') + 1).join(' ');
+                cm.replaceSelection(spaces);
+            },
+        });
+
         $(function() {
+            editor.setSize('100%', 496);
+
             var canvas = document.getElementById('canvas');
             var ctx = canvas.getContext('2d');
 
-            var paused = true;
+            var paused = false;
             var frame = 0;
 
             function playProgram(program) {
+                frame = 0;
+
                 let canvas = document.getElementById('canvas');
                 let gui = new TaichiGUI(canvas, 512);
 
@@ -138,7 +166,7 @@ hub.bind_image(img)
 
                 let fps = 0;
                 let last_time = Date.now();
-                gui.animation(function() {
+                gui.animation(function perFrame() {
                     if (paused)
                         return;
 
@@ -147,7 +175,6 @@ hub.bind_image(img)
                         last_time = Date.now();
                         fps = 0;
                     }
-                    frame++;
                     fps++;
 
                     program.set_arg_float(0, frame * 0.04);
@@ -167,6 +194,8 @@ hub.bind_image(img)
                         export_data();
                         gui.circles(extr);
                     }
+
+                    frame++;
                 });
             }
 

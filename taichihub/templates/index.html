@@ -22,6 +22,16 @@
             <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">search</i></a>
             <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">refresh</i></a>
             <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">more_vert</i></a>
+            <a href="https://github.com/taichi-dev/taichi.js" target="_blank" class="mdui-btn mdui-btn-icon mdui-ripple mdui-ripple-white" mdui-tooltip="{content: 'Github'}">
+      <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 36 36" enable-background="new 0 0 36 36" xml:space="preserve" class="mdui-icon" style="width: 24px;height:24px;">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="#ffffff" d="M18,1.4C9,1.4,1.7,8.7,1.7,17.7c0,7.2,4.7,13.3,11.1,15.5
+	c0.8,0.1,1.1-0.4,1.1-0.8c0-0.4,0-1.4,0-2.8c-4.5,1-5.5-2.2-5.5-2.2c-0.7-1.9-1.8-2.4-1.8-2.4c-1.5-1,0.1-1,0.1-1
+	c1.6,0.1,2.5,1.7,2.5,1.7c1.5,2.5,3.8,1.8,4.7,1.4c0.1-1.1,0.6-1.8,1-2.2c-3.6-0.4-7.4-1.8-7.4-8.1c0-1.8,0.6-3.2,1.7-4.4
+	c-0.2-0.4-0.7-2.1,0.2-4.3c0,0,1.4-0.4,4.5,1.7c1.3-0.4,2.7-0.5,4.1-0.5c1.4,0,2.8,0.2,4.1,0.5c3.1-2.1,4.5-1.7,4.5-1.7
+	c0.9,2.2,0.3,3.9,0.2,4.3c1,1.1,1.7,2.6,1.7,4.4c0,6.3-3.8,7.6-7.4,8c0.6,0.5,1.1,1.5,1.1,3c0,2.2,0,3.9,0,4.5
+	c0,0.4,0.3,0.9,1.1,0.8c6.5-2.2,11.1-8.3,11.1-15.5C34.3,8.7,27,1.4,18,1.4z"></path>
+      </svg>
+    </a>
         </div>
 
         <div class="mdui-container mdui-m-t-2">
@@ -48,7 +58,10 @@ hub.bind_image(img)
                     </div>
 
                     <div class="mdui-card-actions mdui-m-t-1 mdui-m-b-1">
-                        <button class="mdui-btn mdui-btn-raised mdui-hoverable mdui-ripple mdui-color-theme-accent" id="button-run"><i class="mdui-icon material-icons">play_arrow</i></button>
+                        <button class="mdui-btn mdui-btn-raised mdui-icon-left mdui-hoverable mdui-ripple mdui-color-theme-accent mdui-float-left" mdui-tooltip="{content: 'Launch code'}" id="button-run"><i class="mdui-icon material-icons">play_arrow</i> Run</button>
+                        <div class="mdui-chip mdui-float-left mdui-valign">
+                            <span class="mdui-chip-title" mdui-tooltip="{content: 'Server status'}" id="label-status">idle</span>
+                        </div>
                     </div>
                 </div>
 
@@ -57,12 +70,11 @@ hub.bind_image(img)
                     <canvas class="mdui-img-fluid mdui-img-rounded mdui-center mdui-valign mdui-m-t-1" id="canvas" height="512" width="512">HTML5 is not supported on your browser :(</canvas>
                   </div>
                   <div class="mdui-card-actions mdui-m-t-1 mdui-m-b-1">
-                    <button class="mdui-btn mdui-btn-icon mdui-btn-raised mdui-hoverable mdui-ripple mdui-float-left" id="button-pause"><i class="mdui-icon material-icons" id="icon-pause">pause</i></button>
-                    <div class="mdui-chip mdui-float-left">
+                    <button class="mdui-btn mdui-btn-icon mdui-btn-raised mdui-hoverable mdui-ripple mdui-valign mdui-color-theme mdui-float-left" mdui-tooltip="{content: 'Pause/Start'}" id="button-pause"><i class="mdui-icon material-icons" id="icon-pause">pause</i></button>
+                    <div class="mdui-chip mdui-float-left mdui-valign mdui-m-l-1">
                         <span class="mdui-chip-title" id="label-fps">-- FPS</span>
                     </div>
-                    <button class="mdui-btn mdui-btn-icon mdui-float-right"><i class="mdui-icon material-icons">share</i></button>
-                    <button class="mdui-btn mdui-btn-icon mdui-float-right"><i class="mdui-icon material-icons">save</i></button>
+                    <button class="mdui-btn mdui-btn-icon mdui-float-right" mdui-tooltip="{content: 'Reset'}" id="button-reset"><i class="mdui-icon material-icons">refresh</i></button>
                   </div>
                 </div>
             </div>
@@ -83,11 +95,13 @@ hub.bind_image(img)
             ctx.fillRect(0, 0, 512, 512);
 
             var paused = false;
+            var frame = 0;
 
             function playProgram(program) {
                 let canvas = document.getElementById('canvas');
                 let gui = new TaichiGUI(canvas, 512);
 
+                let reset = program.get('reset') || program.get('init');
                 let substep = program.get('substep') || program.get('advance');
                 let render = program.get('render') || program.get('paint');
 
@@ -108,8 +122,11 @@ hub.bind_image(img)
                     console.error('Cannot find the kernel to export data!');
                 }
 
+                if (typeof reset != 'undefined') {
+                    reset();
+                }
+
                 let fps = 0;
-                let frame = 0;
                 let last_time = Date.now();
                 gui.animation(function() {
                     if (paused)
@@ -165,11 +182,18 @@ hub.bind_image(img)
 
             $('#button-pause').click(function() {
                 paused = !paused;
-                $('#icon-pause').html(paused ? 'pause' : 'play_arrow');
+                $('#icon-pause').html(paused ? 'play_arrow' : 'pause');
+            });
+
+            $('#button-reset').click(function() {
+                frame = 0;
+                if (typeof reset != 'undefined') {
+                    reset();
+                }
             });
 
             $('#button-run').click(function() {
-                $('#text-output').val('Compiling...');
+                $('#label-status').html('compiling');
                 var code = $('#text-code').val();
                 $.ajax({
                     type: 'POST',
@@ -178,13 +202,15 @@ hub.bind_image(img)
                     datatype: 'json',
                     success: function(res) {
                         console.log('Server compile result:', res);
+                        $('#label-status').html(res.status);
                         $('#text-output').val(res.output);
                         if (res.status == 'success') {
                             loadScript(res.javascript);
                         }
                     },
                     error: function(xmlhr, err, exc) {
-                        alert('Error connecting server:', err, exc);
+                        $('#label-status').html('error');
+                        alert('Error requesting server!', err, exc);
                     },
                 });
             });

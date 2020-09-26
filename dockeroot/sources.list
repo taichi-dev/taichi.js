@@ -1,0 +1,13 @@
+deb http://mirrors.cloud.aliyuncs.com/debian stable main contrib non-free
+deb http://mirrors.cloud.aliyuncs.com/debian stable-proposed-updates main contrib non-free
+deb http://mirrors.cloud.aliyuncs.com/debian stable-updates main contrib non-free
+deb-src http://mirrors.cloud.aliyuncs.com/debian stable main contrib non-free
+deb-src http://mirrors.cloud.aliyuncs.com/debian stable-proposed-updates main contrib non-free
+deb-src http://mirrors.cloud.aliyuncs.com/debian stable-updates main contrib non-free
+
+deb http://mirrors.aliyun.com/debian stable main contrib non-free
+deb http://mirrors.aliyun.com/debian stable-proposed-updates main contrib non-free
+deb http://mirrors.aliyun.com/debian stable-updates main contrib non-free
+deb-src http://mirrors.aliyun.com/debian stable main contrib non-free
+deb-src http://mirrors.aliyun.com/debian stable-proposed-updates main contrib non-free
+deb-src http://mirrors.aliyun.com/debian stable-updates main contrib non-free

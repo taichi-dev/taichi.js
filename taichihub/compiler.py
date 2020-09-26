@@ -1,36 +1,46 @@
 #!/usr/bin/env python3
 
 import subprocess
-import tempfile
-import random
-import string
 import shutil
-import time
 import sys
 import os
+
+
+docker_image = 'taichihub'
 
 
 def do_compile(target, source=None):
     if source is None:
         source = target
 
+    envs = 'TI_ACTION_RECORD='
+
     print('Generating action record...')
-    env = dict(os.environ)
-    env.update({'TI_ACTION_RECORD': f'{source}.yml', 'TI_ARCH': 'cc',
-                'PYTHONPATH': os.path.join(os.path.dirname(__file__), 'modules')})
     try:
-        output = subprocess.check_output([sys.executable, source],
-            env=env, stderr=subprocess.STDOUT, timeout=8)
-    except subprocess.CalledProcessError as e:
-        print('Error while generating action record:')
-        print(e.output)
+        container = subprocess.check_output(['docker', 'create', '-a', 'STDOUT', '-a', 'STDERR',
+                '-e', 'TI_ACTION_RECORD=/app/main.py.yml', '-e', 'TI_ARCH=cc',
+                docker_image, 'python', 'main.py']).decode().strip()
+        subprocess.check_call(['docker', 'cp', source, container + ':/app/main.py'])
+        try:
+            output = subprocess.check_output(['docker', 'start', '-a', container],
+                stderr=subprocess.STDOUT, timeout=8)
+        except subprocess.CalledProcessError as e:
+            print('Error while generating action record:')
+            print(e.output)
+            print('(END)')
+            return e.output, 'failure'
+        except subprocess.TimeoutExpired as e:
+            print('Timeout while generating action record:')
+            print(e.output)
+            print('(END)')
+            return e.output, 'timeout'
+
+        print('The program output was:')
+        print(output.decode())
         print('(END)')
-        return e.output, 'failure'
-    except subprocess.TimeoutExpired as e:
-        print('Timeout while generating action record:')
-        print(e.output)
-        print('(END)')
-        return e.output + '\n(Time limit exceed)', 'timeout'
+        subprocess.check_call(['docker', 'cp', container + ':/app/main.py.yml', f'{source}.yml'])
+    finally:
+        subprocess.call(['docker', 'rm', container])
 
     print('Composing C file...')
     subprocess.check_call([sys.executable, '-m', 'taichi', 'cc_compose',
@@ -50,41 +60,6 @@ def do_compile(target, source=None):
         f.write(s)
 
     return output, 'success'
-
-
-random.seed(time.time_ns())
-
-def get_random_string(length):
-    letters = string.ascii_lowercase
-    return ''.join(random.choice(letters) for i in range(length))
-
-
-def compile_code(app, source):
-    cachedir = os.path.join(app.root_path, 'cache')
-    if not os.path.exists(cachedir):
-        os.mkdir(cachedir)
-
-    cacheid = '0.' + get_random_string(10)
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        os.chmod(tmpdir, 0o777)
-
-        src = os.path.join(tmpdir, 'main.py')
-        dst = os.path.join(cachedir, f'{cacheid}')
-
-        with open(src, 'w') as f:
-            f.write(source)
-
-        print('compiling', src, 'to', dst)
-        output, status = do_compile(dst, src)
-        print('done with', src, 'to', dst)
-
-        output = output.decode()
-        ret = {'status': status, 'output': output}
-        if status == 'success':
-            ret['cacheid'] = cacheid
-            ret['javascript'] = f'/cache/{cacheid}.js'
-        return ret
 
 
 if __name__ == '__main__':

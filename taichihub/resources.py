@@ -9,6 +9,12 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/')
+@app.route('/help')
+def help():
+    return render_template('help.html')
+
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),

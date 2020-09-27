@@ -1,5 +1,5 @@
 from . import app
-from flask import request, send_from_directory
+from flask import request, send_from_directory, render_template
 import tempfile
 import hashlib
 import base64
@@ -38,11 +38,12 @@ def get_cache_id(source):
 
 
 def get_save_id(name):
-    return '1.' + myhash(name).lower()
+    assert all(i in string.ascii_letters + string.digits for i in name), name
+    return '1.' + name
 
 
-def get_user_id(name):
-    return '2.' + myhash(name).lower()
+def get_user_id(addr):
+    return addr
 
 
 def get_cache_path(source):
@@ -84,23 +85,38 @@ def load():
         record = json.load(f)
 
     ret = {'status': 'found'}
-    ret['cacheid'] = record['cacheid']
-    ret['userid'] = record['userid']
+    ret.update(record)
     return ret
+
+
+@app.route('/')
+def browse():
+    listfile = os.path.join(app.root_path, 'saved', 'entries.lst')
+    shaders = []
+    with open(listfile) as f:
+        for line in f.readlines():
+            if line.startswith('- '):
+                record = json.loads(line[2:])
+                shaders.insert(0, record)
+    return render_template('browse.html', shaders=shaders)
+
+
+@app.route('/p/<name>')
+def view(name):
+    return render_template('index.html', shader_name=name)
 
 
 @app.route('/list')
 def list_():
-    recordfile = os.path.join(app.root_path, 'saved', 'entries.lst')
-    with open(recordfile, 'r') as f:
-        content = f.read()
-    return content
+    return send_from_directory(os.path.join(app.root_path, 'saved'), 'entries.lst')
 
 
-def record_save_entry(name):
+def record_save_entry(entry):
     recordfile = os.path.join(app.root_path, 'saved', 'entries.lst')
     with open(recordfile, 'a') as f:
-        print(name, file=f)
+        f.write('- ')
+        json.dump(entry, f)
+        f.write('\n')
 
 
 @app.route('/save', methods=['POST'])
@@ -109,7 +125,8 @@ def save():
     userid = get_user_id(request.remote_addr)
     name = str(request.form['name'])
     code = str(request.form['code'])
-    assert len(name)
+    title = str(request.form['title'])
+    assert len(name) and len(title), (name, title)
     cacheid, cache_path = get_cache_path(code)
     if not os.path.exists(cache_path):
         print('Cache entry not found at:', cache_path)
@@ -128,10 +145,11 @@ def save():
         print('Saving to an existing entry')
     else:
         print('Saving to a new entry')
-        record_save_entry(name)
+        entry = {'name': name}
+        record_save_entry(entry)
 
-    record = {'name': name, 'cacheid': cacheid, 'userid': userid, 'mtime': time.asctime()}
-    print('Saving record from', name, 'to:', save_path)
+    record = {'name': name, 'cacheid': cacheid, 'userid': userid, 'title': title, 'mtime': time.asctime()}
+    print('Saving record for user', userid, 'from', name, 'to:', save_path)
     with open(save_path, 'w') as f:
         json.dump(record, f)
 

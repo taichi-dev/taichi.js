@@ -3,4 +3,5 @@
 /.vscode
 __pycache__/
 taichihub/cache/
+taichihub/saved/
 .*.swp

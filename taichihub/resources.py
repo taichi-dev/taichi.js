@@ -18,17 +18,6 @@ def new():
     return f'<script>window.location.href = "/p/{name}";</script>'
 
 
-@app.route('/')
-def browse():
-    pass
-
-
-@app.route('/p/<name>')
-def view(name):
-    return render_template('index.html', shader_name=name)
-
-
-@app.route('/')
 @app.route('/help')
 def help_():
     return render_template('help.html')
@@ -44,6 +33,6 @@ def taichi_js():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'taichi.js')
 
 
-@app.route('/lib/<path:path>')
-def lib_js(path):
-    return send_from_directory(os.path.join(app.root_path, 'static', 'lib'), path)
+@app.route('/hubview.js')
+def hubview_js():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'hubview.js')

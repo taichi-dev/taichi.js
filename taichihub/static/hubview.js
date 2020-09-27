@@ -53,6 +53,10 @@ class HubView {
         }
         if (typeof this.export_data == 'undefined') {
             this.export_data = this.program.get('hub_get_particles');
+            this.get_num_particles = this.program.get('hub_get_num_particles');
+            if (typeof this.get_num_particles == 'undefined') {
+                this.get_num_particles = function() { program.set_arg_int(0, 8192); };
+            }
             this.scene_type = 'particles';
         }
         if (typeof this.render == 'undefined' && typeof this.substep == 'undefined') {
@@ -87,10 +91,12 @@ class HubView {
             let extr = this.program.set_ext_arr(0, [this.gui.resx, this.gui.resy, 4]);
             this.export_data();
             this.gui.set_image(extr);
+
         } else if (this.scene_type == 'particles') {
-            let extr = this.program.set_ext_arr(0, [0, 2]);
+            this.get_num_particles();
+            var num = this.program.get_ret_int(0);
+            let extr = this.program.set_ext_arr(0, [num, 2]);
             this.export_data();
-            this.program.get_ret_float(0);
             this.gui.circles(extr);
         }
     }

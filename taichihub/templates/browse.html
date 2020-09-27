@@ -65,7 +65,7 @@
         {% for shader in shaders %}
             <div class="mdui-col-xs-4">
                 <a href="/p/{{ shader.name }}">
-                    <div class="mdui-card mdui-m-b-2">
+                    <div class="mdui-card mdui-hoverable mdui-m-t-1 mdui-m-b-3 mdui-m-l-1 mdui-m-r-1" id="card-{{ loop.index }}">
                         <div class="mdui-card-media">
                             <canvas class="mdui-img-fluid mdui-img-rounded mdui-center mdui-valign" id="canvas-{{ loop.index }}" height="512" width="512">HTML5 is not supported on your browser :(</canvas>
                             <div class="mdui-card-media-covered">
@@ -89,6 +89,13 @@
                 var canvas = document.getElementById('canvas-' + {{ loop.index }});
                 var hub = new HubView(canvas, editor, {{ shader.name|tojson }});
                 hub.paused = true;
+
+                $('#card-' + {{ loop.index }}).hover(function() {
+                    hub.paused = false;
+                }, function() {
+                    hub.paused = true;
+                });
+
                 $.get('/load', {name: {{ shader.name|tojson }}}, function(res) {
                     $('#title-' + {{ loop.index }}).html(res.title);
                     $('#author-' + {{ loop.index }}).html(res.userid);
@@ -97,6 +104,7 @@
             </script>
         {% endfor %}
 
+            <button href="javascript:;" onclick="window.location.href = '/new'" class="mdui-m-l-1 mdui-m-r-1 mdui-m-t-2 mdui-m-b-1 mdui-btn mdui-btn-block mdui-color-theme-accent mdui-ripple">Create new..</button>
         </div>
 
         <script src="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/js/mdui.min.js"></script>

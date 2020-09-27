@@ -42,13 +42,20 @@ def bind_particles(pos, num=None):
         num = pos.shape[0]
 
     @ti.kernel
-    def hub_get_particles(posout: ti.ext_arr()) -> int:
+    def hub_get_num_particles() -> int:
+        if ti.static(isinstance(num, int)):
+            return num
+        else:
+            return num[None]
+
+    @ti.kernel
+    def hub_get_particles(posout: ti.ext_arr()):
         for I in ti.grouped(pos):
             for j in ti.static(range(2)):
                 posout[I, j] = pos[I][j]
-        return num if isinstance(num, int) else num[None]
 
     posout = np.empty((*pos.shape, 2), dtype=np.float32)
+    hub_get_num_particles()
     hub_get_particles(posout)
 
 

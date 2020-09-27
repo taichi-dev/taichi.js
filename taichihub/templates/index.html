@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>Taichi.js | Playground</title>
+        <title>Taichi.js | ${{ shader_name }}</title>
 
         <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
         <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/css/mdui.min.css"/>
@@ -17,7 +17,31 @@
 
     <body class="mdui-theme-layout-auto mdui-theme-accent-pink mdui-theme-primary-indigo">
         <div class="mdui-toolbar mdui-color-theme">
-            <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">menu</i></a>
+            <a href="javascript:;" class="mdui-btn mdui-btn-icon" mdui-tooltip="{content: 'Menu'}" mdui-menu="{target: '#toolbar-attr'}"><i class="mdui-icon material-icons">menu</i></a>
+            <ul class="mdui-menu mdui-menu-cascade" id="toolbar-attr">
+                <li class="mdui-menu-item">
+                <a href="/new" class="mdui-ripple">New shader..</a>
+                </li>
+
+                <li class="mdui-menu-item">
+                <a href="/" class="mdui-ripple">Browse shaders..</a>
+                </li>
+
+                <li class="mdui-menu-item">
+                <a href="/settings" class="mdui-ripple">Settings</a>
+                </li>
+
+                <li class="mdui-divider"></li>
+
+                <li class="mdui-menu-item">
+                <a href="https://github.com/taichi-dev/taichi.js/issues/new" class="mdui-ripple">Feedback</a>
+                </li>
+
+                <li class="mdui-menu-item">
+                <a href="/help">Help</a>
+                </li>
+            </ul>
+
             <span class="mdui-typo-title">Taichi.js</span>
             <div class="mdui-toolbar-spacer"></div>
             <a href="/help" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons" mdui-tooltip="{content: 'Help'}">help_outline</i></a>
@@ -59,11 +83,15 @@ hub.bind_image(img)
                     </div>
 
                     <div class="mdui-card-actions mdui-m-t-1 mdui-m-b-1">
-                        <button class="mdui-btn mdui-btn-raised mdui-icon-left mdui-hoverable mdui-ripple mdui-color-theme-accent mdui-float-left" mdui-tooltip="{content: 'Launch it!'}" id="button-run"><i class="mdui-icon material-icons">play_arrow</i> Run</button>
+                        <button class="mdui-btn mdui-btn-raised mdui-icon-left mdui-hoverable mdui-ripple mdui-color-theme-accent mdui-float-left" mdui-tooltip="{content: 'Launch shader'}" id="button-run"><i class="mdui-icon material-icons">play_arrow</i> Run</button>
                         <div class="mdui-chip mdui-float-left mdui-valign">
-                            <span class="mdui-chip-title" mdui-tooltip="{content: 'Program status'}" id="label-status">idle</span>
+                            <span class="mdui-chip-title" mdui-tooltip="{content: 'Shader status'}" id="label-status">idle</span>
                         </div>
-                        <button class="mdui-btn mdui-btn-icon mdui-hoverable mdui-ripple mdui-float-right" mdui-tooltip="{content: 'Save work'}" id="button-save"><i class="mdui-icon material-icons">save</i></button>
+                        <button class="mdui-btn mdui-btn-icon mdui-hoverable mdui-ripple mdui-float-right" mdui-tooltip="{content: 'Load a template..'}" mdui-dialog="{target: '#dialog-load'}"><i class="mdui-icon material-icons">folder_open</i></button>
+                        <button class="mdui-btn mdui-btn-icon mdui-hoverable mdui-ripple mdui-float-right" mdui-tooltip="{content: 'Save this shader'}" id="button-save"><i class="mdui-icon material-icons">save</i></button>
+                        <div class="mdui-chip mdui-float-right mdui-valign">
+                            <span class="mdui-chip-title" mdui-tooltip="{content: 'Save status'}" id="label-savestatus">unsaved</span>
+                        </div>
                     </div>
                 </div>
 
@@ -74,7 +102,7 @@ hub.bind_image(img)
                   <div class="mdui-card-actions mdui-m-t-1 mdui-m-b-1">
                     <button class="mdui-btn mdui-btn-icon mdui-btn-raised mdui-hoverable mdui-ripple mdui-valign mdui-color-theme mdui-float-left" mdui-tooltip="{content: 'Pause/Start'}" id="button-pause"><i class="mdui-icon material-icons" id="icon-pause">pause</i></button>
                     <div class="mdui-chip mdui-float-left mdui-valign mdui-m-l-1">
-                        <span class="mdui-chip-title" id="label-fps">-- FPS</span>
+                        <span class="mdui-chip-title" mdui-tooltip="{content: 'Frames per second'}" id="label-fps">-- FPS</span>
                     </div>
                     <button class="mdui-btn mdui-btn-icon mdui-ripple mdui-float-right" mdui-tooltip="{content: 'Reset simulation'}" id="button-reset"><i class="mdui-icon material-icons">refresh</i></button>
                   </div>
@@ -97,6 +125,20 @@ hub.bind_image(img)
 
             <div class="mdui-textfield mdui-textfield-floating-label">
                 <textarea class="mdui-textfield-input" rows="25" placeholder="Output will be displayed here" id="text-output" disabled></textarea>
+            </div>
+        </div>
+
+        <div class="mdui-dialog" id="dialog-load">
+            <div class="mdui-dialog-title">Load a template</div>
+            <div class="mdui-dialog-content">
+            What's the shader ID you'd like to load?<br/>
+            <div class="mdui-textfield">
+                <input class="mdui-textfield-input" type="text" placeholder="Shader ID" id="text-load-name"/>
+            </div>
+            </div>
+            <div class="mdui-dialog-actions">
+                <button class="mdui-btn mdui-ripple" mdui-dialog-cancel>Cancel</button>
+                <button class="mdui-btn mdui-ripple" mdui-dialog-confirm id="button-load">OK</button>
             </div>
         </div>
 
@@ -132,14 +174,23 @@ hub.bind_image(img)
         $(function() {
             editor.setSize('100%', 496);
 
-            class TaichiHub {
+
+            class HubView {
                 constructor() {
                     this.paused = false;
                     this.frame = 0;
 
+                    this.shaderName = {{ shader_name|tojson }};
+
                     $('#button-pause').click(this.onPause.bind(this));
                     $('#button-reset').click(this.onReset.bind(this));
+                    $('#button-save').click(this.onSave.bind(this));
+                    $('#button-load').click(this.onLoad.bind(this));
                     $('#button-run').click(this.onRun.bind(this));
+
+                    if (this.shaderName != null) {
+                        this.doLoad(this.shaderName);
+                    }
                 }
 
                 terminate() {
@@ -231,11 +282,28 @@ hub.bind_image(img)
                     this.frame++;
                 }
 
+                loadShader(url) {
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        dataType: 'text',
+                        success: function(res) {
+                            $('#label-savestatus').html('loaded');
+                            console.log('Successfully loaded shader:', url);
+                            editor.setValue(res);
+                        }.bind(this),
+                        error: function(xmlhr, err, exc) {
+                            $('#label-status').html('error');
+                            alert('Error loading shader: ' + err + exc);
+                        },
+                    });
+                }
+
                 loadScript(url) {
                     $.ajax({
                         url: url,
                         type: 'GET',
-                        dataType: 'text',  // we'll evaluate it ourself
+                        dataType: 'text',  // we will evaluate it ourself
                         data: { dummy: Date.now() },
                         success: function(res) {
                             $('#label-status').html('loaded');
@@ -252,7 +320,7 @@ hub.bind_image(img)
                         }.bind(this),
                         error: function(xmlhr, err, exc) {
                             $('#label-status').html('error');
-                            alert('Error loading compiled script!', err, exc);
+                            alert('Error loading compiled script: ' + err + exc);
                         },
                     });
                 }
@@ -268,6 +336,60 @@ hub.bind_image(img)
                         this.reset();
                     }
                     this.onUpdate();
+                }
+
+                onSave() {
+                    if ($('#label-status').html() != 'ready') {
+                        alert('The shader must RUN successfully (ready) before save!');
+                        return;
+                    }
+                    var code = editor.getValue();
+                    var name = this.shaderName;
+                    $('#label-savestatus').html('saving');
+                    $.ajax({
+                        type: 'POST',
+                        url: '/save',
+                        data: {name: name, code: code},
+                        datatype: 'json',
+                        success: function(res) {
+                            console.log('Server load result:', res);
+                            $('#label-savestatus').html(res.status);
+                            if (res.status == 'conflict') {
+                                alert('Name already used by other users: ' + name);
+                            }
+                        }.bind(this),
+                        error: function(xmlhr, err, exc) {
+                            $('#label-savestatus').html('error');
+                            alert('Error requesting server: ' + err + exc);
+                        },
+                    });
+                }
+
+                onLoad() {
+                    var name = $('#text-load-name').val();
+                    this.doLoad(name);
+                }
+
+                doLoad(name) {
+                    $.ajax({
+                        type: 'GET',
+                        url: '/load',
+                        data: {name: name},
+                        datatype: 'json',
+                        success: function(res) {
+                            console.log('Server load result:', res);
+                            if (res.status == 'found') {
+                                this.loadShader('/cache/' + res.cacheid);
+                            } else if (res.status == 'notfound') {
+                                res.status = 'new';
+                            }
+                            $('#label-savestatus').html(res.status);
+                        }.bind(this),
+                        error: function(xmlhr, err, exc) {
+                            $('#label-savestatus').html('error');
+                            alert('Error requesting server: ' + err + exc);
+                        },
+                    });
                 }
 
                 onRun() {
@@ -290,13 +412,13 @@ hub.bind_image(img)
                         }.bind(this),
                         error: function(xmlhr, err, exc) {
                             $('#label-status').html('error');
-                            alert('Error requesting server!', err, exc);
+                            alert('Error requesting server: ' + err + exc);
                         },
                     });
                 }
             }
 
-            taichihub = new TaichiHub();
+            taichihub = new HubView();
         });
         </script>
     </body>

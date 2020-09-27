@@ -4,8 +4,9 @@
         <meta charset="utf-8">
         <title>Taichi.js | Help</title>
 
-        <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+        <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
         <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/css/mdui.min.css"/>
+        <link href="https://cdn.bootcdn.net/ajax/libs/codemirror/5.35.0/codemirror.min.css" rel="stylesheet">
 
         <style>
         .canvas {
@@ -16,7 +17,31 @@
 
     <body class="mdui-theme-layout-auto mdui-theme-accent-pink mdui-theme-primary-indigo">
         <div class="mdui-toolbar mdui-color-theme">
-            <a href="javascript:;" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons">menu</i></a>
+            <a href="javascript:;" class="mdui-btn mdui-btn-icon" mdui-tooltip="{content: 'Menu'}" mdui-menu="{target: '#toolbar-attr'}"><i class="mdui-icon material-icons">menu</i></a>
+            <ul class="mdui-menu mdui-menu-cascade" id="toolbar-attr">
+                <li class="mdui-menu-item">
+                <a href="/new" class="mdui-ripple">New shader..</a>
+                </li>
+
+                <li class="mdui-menu-item">
+                <a href="/" class="mdui-ripple">Browse shaders..</a>
+                </li>
+
+                <li class="mdui-menu-item">
+                <a href="/settings" class="mdui-ripple">Settings</a>
+                </li>
+
+                <li class="mdui-divider"></li>
+
+                <li class="mdui-menu-item">
+                <a href="https://github.com/taichi-dev/taichi.js/issues/new" class="mdui-ripple">Feedback</a>
+                </li>
+
+                <li class="mdui-menu-item">
+                <a href="/help">Help</a>
+                </li>
+            </ul>
+
             <span class="mdui-typo-title">Taichi.js</span>
             <div class="mdui-toolbar-spacer"></div>
             <a href="/help" class="mdui-btn mdui-btn-icon"><i class="mdui-icon material-icons" mdui-tooltip="{content: 'Help'}">help_outline</i></a>
@@ -33,7 +58,7 @@
         </div>
 
         <div class="mdui-container mdui-m-t-2">
-            hello
+        Hello world!
         </div>
 
         <script src="//cdn.jsdelivr.net/npm/mdui@1.0.0/dist/js/mdui.min.js"></script>

@@ -233,9 +233,10 @@ hub.bind_image(img)
 
                 loadScript(url) {
                     $.ajax({
-                        url: url.replace('.js', '_' + Date.now() + '_.js'),
+                        url: url,
                         type: 'GET',
-                        dataType: 'text',
+                        dataType: 'text',  // we'll evaluate it ourself
+                        data: { dummy: Date.now() },
                         success: function(res) {
                             $('#label-status').html('loaded');
                             console.log('Successfully loaded:', url);

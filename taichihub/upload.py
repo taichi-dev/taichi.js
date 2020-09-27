@@ -14,12 +14,6 @@ import os
 def cache(file):
     assert file.startswith('0.'), file
     assert file.endswith('.js') or file.endswith('.wasm') or file.endswith('.py'), file
-    try:
-        beg = file.index('_')
-        end = file[beg + 1:].index('_') + beg + 2
-        file = file[:beg] + file[end:]
-    except ValueError:
-        pass
     return send_from_directory(os.path.join(app.root_path, 'cache'), file)
 
 

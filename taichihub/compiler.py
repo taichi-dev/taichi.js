@@ -58,11 +58,8 @@ def do_compile(target, source=None, extra=[]):
     # which is being used in Emscripten generated JS stub.
     # So we do a quick hack to make AJAX happy:
     s = s.replace('var scriptDirectory=""', 'var scriptDirectory="/cache/"', 1)
-    # Keep reloading, don't cache the WASM file:
-    s = s.replace('.wasm";', '_" + Date.now() + "_.wasm";', 1)
-    # https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Modules
-    # Always clean 'Modules' on each load, so that pressing RUN gets RESET too:
-    #s = s.replace('var Module=typeof Module!=="undefined"?Module:{};', 'Module={};', 1)
+    # Make sure the browser keep reloading, don't cache the WASM file:
+    s = s.replace('.wasm";', '.wasm?dummy="+Date.now();', 1)
     with open(f'{target}.js', 'w') as f:
         f.write(s)
 

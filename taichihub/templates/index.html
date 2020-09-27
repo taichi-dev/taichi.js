@@ -136,14 +136,22 @@ hub.bind_image(img)
                 constructor() {
                     this.paused = false;
                     this.frame = 0;
+
+                    $('#button-pause').click(this.onPause.bind(this));
+                    $('#button-reset').click(this.onReset.bind(this));
+                    $('#button-run').click(this.onRun.bind(this));
                 }
 
                 terminate() {
+                    this.frame = 0;
                     if (typeof this.gui != 'undefined')
                         this.gui.stopped = true;
+                    this.gui = undefined;
                 }
 
                 play() {
+                    this.terminate();
+
                     let canvas = document.getElementById('canvas');
                     this.gui = new TaichiGUI(canvas, 512);
 
@@ -287,19 +295,7 @@ hub.bind_image(img)
                 }
             }
 
-            $('#button-pause').click(function() {
-                taichihub.a.onPause();
-            });
-            $('#button-reset').click(function() {
-                taichihub.a.onReset();
-            });
-            $('#button-run').click(function() {
-                if (typeof taichihub.a != 'undefined') {
-                    taichihub.a.terminate();
-                }
-                taichihub.a = new TaichiHub();
-                taichihub.a.onRun();
-            });
+            taichihub = new TaichiHub();
         });
         </script>
     </body>

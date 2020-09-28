@@ -8,7 +8,12 @@ import random
 import shutil
 import json
 import time
+import pymongo
 import os
+
+
+mongo = pymongo.MongoClient('localhost')
+db = mongo.hubdb
 
 
 @app.route('/cache/<file>')
@@ -76,16 +81,17 @@ def compile_():
 def load():
     name = str(request.args['name'])
     saveid, save_path = get_saved_path(name)
-    if not os.path.exists(save_path):
+
+    entry = db.arts.find_one({'name': name})
+    if entry is None:
         print('Saved entry not found for', name, 'at:', save_path)
         ret = {'status': 'notfound'}
         return ret
 
-    with open(save_path) as f:
-        record = json.load(f)
-
+    entry = dict(entry.items())
     ret = {'status': 'found'}
-    ret.update(record)
+    del entry['_id']
+    ret.update(entry)
     return ret
 
 
@@ -93,11 +99,8 @@ def load():
 def browse():
     listfile = os.path.join(app.root_path, 'saved', 'entries.lst')
     shaders = []
-    with open(listfile) as f:
-        for line in f.readlines():
-            if line.startswith('- '):
-                record = json.loads(line[2:])
-                shaders.insert(0, record)
+    for shader in db.arts.find():
+        shaders.append(shader)
     return render_template('browse.html', shaders=shaders)
 
 
@@ -106,55 +109,38 @@ def view(name):
     return render_template('index.html', shader_name=name)
 
 
-@app.route('/list')
-def list_():
-    return send_from_directory(os.path.join(app.root_path, 'saved'), 'entries.lst')
-
-
 def record_save_entry(entry):
-    recordfile = os.path.join(app.root_path, 'saved', 'entries.lst')
-    with open(recordfile, 'a') as f:
-        f.write('- ')
-        json.dump(entry, f)
-        f.write('\n')
+    db.arts.insert_one(entry)
 
 
 @app.route('/save', methods=['POST'])
 def save():
-    print('[IP] Got a save request from:', request.remote_addr)
     userid = get_user_id(request.remote_addr)
     name = str(request.form['name'])
     code = str(request.form['code'])
     title = str(request.form['title'])
-    assert len(name) and len(title), (name, title)
     cacheid, cache_path = get_cache_path(code)
     if not os.path.exists(cache_path):
         print('Cache entry not found at:', cache_path)
         ret = {'status': 'notfound'}
         return ret
 
-    saveid, save_path = get_saved_path(name)
-    if os.path.exists(save_path):
-        with open(save_path, 'r') as f:
-            record = json.load(f)
-        if record['userid'] != userid:
-            ret = {'status': 'conflict'}
-            print('Name already used by another user, conflict!')
-            return ret
-
-        print('Saving to an existing entry')
-    else:
-        print('Saving to a new entry')
-        entry = {'name': name}
-        record_save_entry(entry)
+    print('Saving to an existing entry')
 
     record = {'name': name, 'cacheid': cacheid, 'userid': userid, 'title': title, 'mtime': time.asctime()}
-    print('Saving record for user', userid, 'from', name, 'to:', save_path)
-    with open(save_path, 'w') as f:
-        json.dump(record, f)
+    print('Saving record for user =', userid, 'and name =', name)
+    db.arts.insert_one(record)
 
-    ret = {'status': 'saved', 'saveid': saveid}
+    ret = {'status': 'saved'}
     return ret
+
+
+@app.cli.command('clean-arts')
+def clean_arts():
+    '''Clean user artworks (caution!).'''
+
+    db.drop_collection('arts')
+    print('database cleaned!')
 
 
 def compile_code(source):

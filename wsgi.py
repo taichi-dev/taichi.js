@@ -1,1 +1,0 @@
-from taichihub import app

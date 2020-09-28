@@ -88,14 +88,14 @@ class HubView {
         }
 
         if (this.scene_type == 'image') {
-            let extr = this.program.set_ext_arr(0, [this.gui.resx, this.gui.resy, 4]);
+            let extr = this.program.set_ext_arr_uint8(0, [this.gui.resx, this.gui.resy, 4]);
             this.export_data();
-            this.gui.set_image(extr);
+            this.gui.set_image_uint8(extr);
 
         } else if (this.scene_type == 'particles') {
             this.get_num_particles();
             var num = this.program.get_ret_int(0);
-            let extr = this.program.set_ext_arr(0, [num, 2]);
+            let extr = this.program.set_ext_arr_float(0, [num, 2]);
             this.export_data();
             this.gui.circles(extr);
         }

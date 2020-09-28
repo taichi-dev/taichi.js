@@ -42,7 +42,6 @@ class Taichi {
 
     set_ext_arr(index, shape) {
         let earg_base = this.module._Ti_earg/4 + index * 8;
-        let extr_base = this.module._Ti_extr/4;
         let args_base = this.module._Ti_args/4 + index * 2;
         let earg = this.module.HEAP32.subarray(earg_base, earg_base + 8);
         let args = this.module.HEAP32.subarray(args_base, args_base + 1);
@@ -55,8 +54,28 @@ class Taichi {
             size *= shape[i];
         }
 
+        return size;
+    }
+
+    set_ext_arr_float(index, shape) {
+        let size = this.set_ext_arr(index, shape);
+        let extr_base = this.module._Ti_extr/4;
         let extr = this.module.HEAPF32.subarray(extr_base, extr_base + size);
-        return extr;  // let the user fill it instead of our memcpy
+        return extr;
+    }
+
+    set_ext_arr_int(index, shape) {
+        let size = this.set_ext_arr(index, shape);
+        let extr_base = this.module._Ti_extr/4;
+        let extr = this.module.HEAP32.subarray(extr_base, extr_base + size);
+        return extr;
+    }
+
+    set_ext_arr_uint8(index, shape) {
+        let size = this.set_ext_arr(index, shape);
+        let extr_base = this.module._Ti_extr;
+        let extr = this.module.HEAPU8.subarray(extr_base, extr_base + size);
+        return extr;
     }
 
     get(name) {
@@ -116,6 +135,21 @@ class TaichiGUI {
             callback();
         }
         wrapped();
+    }
+
+    set_image_uint8(image) {
+        let imgData = this.ctx.createImageData(this.resx, this.resy);
+        for (let y = 0; y < this.resy; y++) {
+            for (let x = 0; x < this.resx; x++) {
+                let i = (y * this.resx + x) * 4;
+                let j = (x * this.resy + (this.resy - 1 - y)) * 4;
+                imgData.data[i++] = image[j++];
+                imgData.data[i++] = image[j++];
+                imgData.data[i++] = image[j++];
+                imgData.data[i++] = 255;
+            }
+        }
+        this.ctx.putImageData(imgData, 0, 0);
     }
 
     set_image(image) {

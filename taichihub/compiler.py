@@ -41,6 +41,8 @@ def do_compile(target, source=None, extra=[]):
         print(output.decode())
         print('(END)')
         subprocess.check_call(['docker', 'cp', container + ':/app/main.py.yml', f'{source}.yml'])
+    except Exception as e:
+        raise e
     finally:
         subprocess.call(['docker', 'rm', container])
 

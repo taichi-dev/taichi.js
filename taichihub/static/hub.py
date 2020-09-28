@@ -20,12 +20,13 @@ def bind_image(img):
         for I in ti.grouped(img):
             if ti.static(isinstance(img, ti.Matrix)):
                 for j in ti.static(range(img.n)):
-                    imgout[I, j] = img[I][j]
+                    imgout[I, j] = int(img[I][j] * 255)
             else:
-                for j in ti.static(range(4)):
-                    imgout[I, j] = img[I]
+                val = int(img[I] * 255)
+                for j in ti.static(range(3)):
+                    imgout[I, j] = val
 
-    imgout = np.empty((*img.shape, 4), dtype=np.float32)
+    imgout = np.empty((*img.shape, 4), dtype=np.uint8)
     hub_get_image(imgout)
 
 

@@ -42,15 +42,6 @@ def get_cache_id(source):
     return '0.' + myhash(source)
 
 
-def get_save_id(name):
-    assert all(i in string.ascii_letters + string.digits for i in name), name
-    return '1.' + name
-
-
-def get_user_id(addr):
-    return addr
-
-
 def get_cache_path(source):
     cachedir = os.path.join(app.root_path, 'cache')
     if not os.path.exists(cachedir):
@@ -58,15 +49,6 @@ def get_cache_path(source):
 
     cacheid = get_cache_id(source)
     return cacheid, os.path.join(cachedir, cacheid)
-
-
-def get_saved_path(name):
-    savedir = os.path.join(app.root_path, 'saved')
-    if not os.path.exists(savedir):
-        os.mkdir(savedir)
-
-    saveid = get_save_id(name)
-    return saveid, os.path.join(savedir, saveid)
 
 
 @app.route('/compile', methods=['POST'])
@@ -80,24 +62,20 @@ def compile_():
 @app.route('/load', methods=['GET'])
 def load():
     name = str(request.args['name'])
-    saveid, save_path = get_saved_path(name)
-
     entry = db.arts.find_one({'name': name})
     if entry is None:
-        print('Saved entry not found for', name, 'at:', save_path)
-        ret = {'status': 'notfound'}
-        return ret
+        return {'status': 'notfound'}
 
     entry = dict(entry.items())
     ret = {'status': 'found'}
-    del entry['_id']
-    ret.update(entry)
+    for k, v in entry.items():
+        if k[0] != '_':
+            ret[k] = v
     return ret
 
 
 @app.route('/')
 def browse():
-    listfile = os.path.join(app.root_path, 'saved', 'entries.lst')
     shaders = []
     for shader in db.arts.find():
         shaders.append(shader)
@@ -109,25 +87,20 @@ def view(name):
     return render_template('index.html', shader_name=name)
 
 
-def record_save_entry(entry):
-    db.arts.insert_one(entry)
-
-
 @app.route('/save', methods=['POST'])
 def save():
-    userid = get_user_id(request.remote_addr)
+    userid = request.remote_addr
     name = str(request.form['name'])
     code = str(request.form['code'])
     title = str(request.form['title'])
     cacheid, cache_path = get_cache_path(code)
-    if not os.path.exists(cache_path):
-        print('Cache entry not found at:', cache_path)
-        ret = {'status': 'notfound'}
-        return ret
+    if not os.path.exists(cache_path + '.js'):
+        return {'status': 'notfound'}
 
     print('Saving to an existing entry')
 
-    record = {'name': name, 'cacheid': cacheid, 'userid': userid, 'title': title, 'mtime': time.asctime()}
+    record = {'name': name, 'cacheid': cacheid, 'userid': userid,
+              'title': title, 'code': code, 'mtime': time.asctime()}
     print('Saving record for user =', userid, 'and name =', name)
     db.arts.insert_one(record)
 
@@ -137,26 +110,28 @@ def save():
 
 @app.cli.command('clean-arts')
 def clean_arts():
-    '''Clean user artworks (caution!).'''
+    '''Clean user artworks (caution!)'''
 
     db.drop_collection('arts')
     print('database cleaned!')
 
 
+@app.cli.command('edit-db')
+def edit_db():
+    '''Edit user database'''
+
+    import IPython
+    IPython.embed()
+
+
 def compile_code(source):
     from .compiler import do_compile
-
-    print('Compiling code:')
-    print(source)
-    print('(END)')
 
     cacheid, dst = get_cache_path(source)
 
     script = f'/cache/{cacheid}.js'
     if os.path.exists(dst + '.js'):
-        print('Using cached result in:', dst)
-        ret = {'status': 'cached', 'cacheid': cacheid, 'script': script}
-        return ret
+        return {'status': 'cached', 'cacheid': cacheid, 'script': script}
 
     with tempfile.TemporaryDirectory() as tmpdir:
         src = os.path.join(tmpdir, 'main.py')
@@ -171,9 +146,6 @@ def compile_code(source):
 
         output = output.decode()
         ret = {'status': status, 'output': output}
-        if status == 'success':
-            with open(dst, 'w') as f:
-                f.write(source)
         if status == 'success':
             ret['cacheid'] = cacheid
             ret['script'] = script

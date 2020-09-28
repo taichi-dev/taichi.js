@@ -115,22 +115,11 @@ class HubView {
         this.frame++;
     }
 
-    loadShader(url) {
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'text',
-            success: function(res) {
-                $('#label-savestatus').html('loaded');
-                console.log('Successfully loaded shader:', url);
-                this.editor.setValue(res);
-                this.onRun();
-            }.bind(this),
-            error: function(xmlhr, err, exc) {
-                $('#label-status').html('error');
-                alert('Error loading shader: ' + err + exc);
-            },
-        });
+    loadShaderCode(code) {
+        $('#label-savestatus').html('loaded');
+        console.log('Successfully loaded shader:', code);
+        this.editor.setValue(code);
+        this.onRun();
     }
 
     loadScript(url) {
@@ -220,7 +209,7 @@ class HubView {
                 console.log('Server load result:', res);
                 if (res.status == 'found') {
                     this.title = res.title;
-                    this.loadShader('/cache/' + res.cacheid);
+                    this.loadShaderCode(res.code);
                 } else if (res.status == 'notfound') {
                     res.status = 'new';
                 }

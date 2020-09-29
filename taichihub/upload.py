@@ -97,28 +97,25 @@ def save():
     if not os.path.exists(cache_path + '.js'):
         return {'status': 'notfound'}
 
-    print('Saving to an existing entry')
+    record = db.arts.find_one({'name': name})
+    if record is not None:
+        if record['userid'] != userid:
+            return {'status': 'conflict'}
 
+    mtime = time.asctime()
     record = {'name': name, 'cacheid': cacheid, 'userid': userid,
-              'title': title, 'code': code, 'mtime': time.asctime()}
-    print('Saving record for user =', userid, 'and name =', name)
-    db.arts.insert_one(record)
+              'title': title, 'code': code, 'mtime': mtime}
+
+    if db.arts.find_one_and_update({'name': name}, {'$set': record}) is None:
+        db.arts.insert_one(record)
 
     ret = {'status': 'saved'}
     return ret
 
 
-@app.cli.command('clean-arts')
-def clean_arts():
-    '''Clean user artworks (caution!)'''
-
-    db.drop_collection('arts')
-    print('database cleaned!')
-
-
 @app.cli.command('edit-db')
 def edit_db():
-    '''Edit user database'''
+    '''Edit user database.'''
 
     import IPython
     IPython.embed()

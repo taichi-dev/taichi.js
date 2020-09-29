@@ -195,6 +195,8 @@ class HubView {
                     $('#label-savestatus').html(res.status);
                     if (res.status == 'conflict') {
                         alert('Name already used by other users: ' + name);
+                    } else if (res.status == 'notfound') {
+                        alert('Please run the shader before save so that it gets compiled');
                     }
                 },
                 error: function(xmlhr, err, exc) {

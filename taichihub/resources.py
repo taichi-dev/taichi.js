@@ -36,3 +36,7 @@ def taichi_js():
 @app.route('/hubview.js')
 def hubview_js():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'hubview.js')
+
+@app.route('/cloth.jpg')
+def cloth_jpg():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'cloth.jpg')

@@ -1,3 +1,31 @@
+function imageToPixels(out, url, resx, resy, callback) {
+    let img = new Image();
+    img.src = url;
+    img.crossOrigin = 'use-credentials';
+
+    let canvas = document.createElement('canvas');
+    canvas.width = resx;
+    canvas.height = resy;
+
+    let ctx = canvas.getContext('2d');
+
+    img.onload = function() {
+        ctx.drawImage(img, 0, 0, resx, resy);
+
+        let data = ctx.getImageData(0, 0, resx, resy).data;
+        for (let y = 0; y < resy; y++) {
+            for (let x = 0; x < resx; x++) {
+                let i = (y * resx + x) * 4;
+                let j = (x * resy + (resy - 1 - y)) * 4;
+                out[j++] = data[i++];
+                out[j++] = data[i++];
+                out[j++] = data[i++];
+            }
+        }
+        callback(out, url, resx, resy);
+    };
+}
+
 class HubView {
     constructor(canvas, editor, shaderName) {
         this.paused = false;
@@ -50,6 +78,8 @@ class HubView {
         this.substep = this.program.get('substep');
         this.render = this.program.get('render');
         this.onclick = this.program.get('onclick');
+        this.load_texture = this.program.get('hub_load_texture');
+        this.texture_url = this.program.get_config_str('hub_texture_url');
 
         let substep_nr = this.program.get('hub_get_substep_nr');
         if (typeof substep_nr != 'undefined') {
@@ -168,6 +198,14 @@ class HubView {
 
     onReset() {
         this.frame = 0;
+        if (typeof this.load_texture != 'undefined') {
+            let resx = 512, resy = 512;
+            let extr = this.program.set_ext_arr_uint8(0, [resx, resy, 4]);
+            imageToPixels(extr, this.texture_url, resx, resy, function() {
+                this.load_texture();
+                console.log('loaded texture: ' + this.texture_url);
+            }.bind(this));
+        }
         if (typeof this.reset != 'undefined') {
             this.reset();
         }

@@ -89,24 +89,40 @@ class Taichi {
                 }
             }
         }
-        if (typeof ret == 'undefined') {
+        if (typeof ret == 'undefined')
             return undefined;
-        }
         return function() {
             return ret(this.module._Ti_ctx);
         }.bind(this);
     }
 
+    get_config_int(name) {
+        let base = this.module['_Ti_cfg_' + name];
+        if (typeof base == 'undefined')
+            return undefined;
+        return this.module.HEAP32[base/4];
+    }
+
+    get_config_float(name) {
+        let base = this.module['_Ti_cfg_' + name];
+        if (typeof base == 'undefined')
+            return undefined;
+        return this.module.HEAPF32[base/4];
+    }
+
+    get_config_str(name) {
+        let base = this.module['_Ti_cfg_' + name];
+        if (typeof base == 'undefined')
+            return undefined;
+        let ret = '';
+        for (var i = base; this.module.HEAPU8[i] != 0; i++) {
+            ret += String.fromCharCode(this.module.HEAPU8[i]);
+        }
+        return ret;
+    }
+
     ready(cb) {
         this.module.onRuntimeInitialized = cb;
-        /*if (Taichi.tiAlreadyReady) {
-            cb();
-            return;
-        }
-        this.module.onRuntimeInitialized = function() {
-            cb();
-            Taichi.tiAlreadyReady = true;
-        };*/
     }
 }
 
@@ -138,14 +154,15 @@ class TaichiGUI {
 
     set_image_uint8(image) {
         let imgData = this.ctx.createImageData(this.resx, this.resy);
+        let data = imgData.data;
         for (let y = 0; y < this.resy; y++) {
             for (let x = 0; x < this.resx; x++) {
                 let i = (y * this.resx + x) * 4;
                 let j = (x * this.resy + (this.resy - 1 - y)) * 4;
-                imgData.data[i++] = image[j++];
-                imgData.data[i++] = image[j++];
-                imgData.data[i++] = image[j++];
-                imgData.data[i++] = 255;
+                data[i++] = image[j++];
+                data[i++] = image[j++];
+                data[i++] = image[j++];
+                data[i++] = 255;
             }
         }
         this.ctx.putImageData(imgData, 0, 0);
@@ -153,14 +170,15 @@ class TaichiGUI {
 
     set_image(image) {
         let imgData = this.ctx.createImageData(this.resx, this.resy);
+        let data = imgData.data;
         for (let y = 0; y < this.resy; y++) {
             for (let x = 0; x < this.resx; x++) {
                 let i = (y * this.resx + x) * 4;
                 let j = (x * this.resy + (this.resy - 1 - y)) * 4;
-                imgData.data[i++] = parseInt(image[j++] * 255);
-                imgData.data[i++] = parseInt(image[j++] * 255);
-                imgData.data[i++] = parseInt(image[j++] * 255);
-                imgData.data[i++] = 255 - parseInt(image[j++] * 255);
+                data[i++] = parseInt(image[j++] * 255);
+                data[i++] = parseInt(image[j++] * 255);
+                data[i++] = parseInt(image[j++] * 255);
+                data[i++] = 255;
             }
         }
         this.ctx.putImageData(imgData, 0, 0);

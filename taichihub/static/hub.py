@@ -19,6 +19,11 @@ def cook_color(x):
     return min(255, max(0, int(x * 255)))
 
 
+@ti.func
+def uncook_color(x):
+    return x / 255
+
+
 def bind_image(img):
     @ti.kernel
     def hub_get_image(imgout: ti.ext_arr()):
@@ -41,6 +46,21 @@ def substep_nr(num):
         return num
 
     hub_get_substep_nr()
+
+
+def link_texture(img, url):
+    @ti.kernel
+    def hub_load_texture(imgin: ti.ext_arr()):
+        for I in ti.grouped(img):
+            for j in ti.static(range(img.n)):
+                img[I][j] = uncook_color(imgin[I, j])
+
+    imgin = np.zeros((*img.shape, 4), dtype=np.uint8)
+    hub_load_texture(imgin)
+
+    if '/' not in url:
+        url = '/' + url
+    ti.record_action_config('hub_texture_url', url)
 
 
 def bind_particles(pos, num=None):

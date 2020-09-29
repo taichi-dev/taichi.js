@@ -141,7 +141,6 @@ class HubView {
             url: url,
             type: 'GET',
             dataType: 'text',  // we will evaluate it ourself
-            data: { dummy: Date.now() },
             success: function(res) {
                 $('#label-status').html('loaded');
                 console.log('Successfully loaded:', url);
@@ -182,10 +181,10 @@ class HubView {
         }
         var code = this.editor.getValue();
         var name = this.shaderName;
-        $('#label-savestatus').html('saving');
 
         function entitledCallback(title) {
             this.title = title;
+            $('#label-savestatus').html('saving');
             $.ajax({
                 type: 'POST',
                 url: '/save',

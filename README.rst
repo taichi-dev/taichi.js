@@ -19,10 +19,12 @@ How to setup a TaichiHub server
     cd ..
     emcc --version
 
-2. Install Flask and Taichi:
+2. Install requirements:
 
 .. code-block:: bash
 
+    apt install mongodb
+    python3 -m pip install pymongo
     python3 -m pip install flask
     python3 -m pip install taichi
 

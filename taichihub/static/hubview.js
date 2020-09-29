@@ -19,6 +19,7 @@ class HubView {
         $('#button-save').click(this.onSave.bind(this));
         $('#button-load').click(this.onLoad.bind(this));
         $('#button-run').click(this.onRun.bind(this));
+        this.canvas.click(this.onClick.bind(this));
     }
 
     terminate() {
@@ -28,14 +29,27 @@ class HubView {
         this.gui = undefined;
     }
 
+    onClick(e) {
+        if (typeof this.onclick != 'undefined') {
+            let x = e.offsetX / this.canvas.attr('width');
+            let y = 1 - e.offsetY / this.canvas.attr('height');
+            console.log('onclick', x, y);
+            this.program.set_arg_float(0, x);
+            this.program.set_arg_float(1, y);
+            this.onclick();
+            this.onUpdate();
+        }
+    }
+
     play() {
         this.terminate();
 
-        this.gui = new TaichiGUI(this.canvas, 512);
+        this.gui = new TaichiGUI(this.canvas[0], 512);
 
         this.reset = this.program.get('reset');
         this.substep = this.program.get('substep');
         this.render = this.program.get('render');
+        this.onclick = this.program.get('onclick');
 
         let substep_nr = this.program.get('hub_get_substep_nr');
         if (typeof substep_nr != 'undefined') {
@@ -207,13 +221,14 @@ class HubView {
             datatype: 'json',
             success: function(res) {
                 console.log('Server load result:', res);
-                if (res.status == 'found') {
-                    this.title = res.title;
-                    this.loadShaderCode(res.code);
-                } else if (res.status == 'notfound') {
+                if (res.status == 'notfound') {
                     res.status = 'new';
                 }
                 $('#label-savestatus').html(res.status);
+                if (res.status == 'found') {
+                    this.title = res.title;
+                    this.loadShaderCode(res.code);
+                }
                 if (res.status == 'new') {
                     this.onRun();
                 }

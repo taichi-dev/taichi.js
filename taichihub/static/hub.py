@@ -14,15 +14,20 @@ def kernel(foo):
     return foo
 
 
+@ti.func
+def cook_color(x):
+    return min(255, max(0, int(x * 255)))
+
+
 def bind_image(img):
     @ti.kernel
     def hub_get_image(imgout: ti.ext_arr()):
         for I in ti.grouped(img):
             if ti.static(isinstance(img, ti.Matrix)):
                 for j in ti.static(range(img.n)):
-                    imgout[I, j] = int(img[I][j] * 255)
+                    imgout[I, j] = cook_color(img[I][j])
             else:
-                val = int(img[I] * 255)
+                val = cook_color(img[I])
                 for j in ti.static(range(3)):
                     imgout[I, j] = val
 

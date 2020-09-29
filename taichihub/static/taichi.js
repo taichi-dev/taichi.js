@@ -130,9 +130,8 @@ class TaichiGUI {
                 return;
             }
 
-            window.requestAnimationFrame(wrapped);
-            //setTimeout(wrapped, 1000 / 60);
             callback();
+            window.requestAnimationFrame(wrapped);
         }
         wrapped();
     }

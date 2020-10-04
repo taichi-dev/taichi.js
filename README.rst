@@ -175,10 +175,10 @@ How to setup a TaichiHub server
 
 .. code-block:: bash
 
-    apt install mongodb
     python3 -m pip install pymongo
     python3 -m pip install flask
     python3 -m pip install taichi
+    apt install mongodb
 
 3. Clone this repo:
 
@@ -198,7 +198,8 @@ How to setup a TaichiHub server
 .. code-block:: bash
 
     source /path/to/emsdk/emsdk_env.sh  # add `emcc` to PATH
-    python3 -m flask run
+    cd taichihub
+    python3 -m flask run -h 0.0.0.0 -p 80
 
 
 Acknowledgements

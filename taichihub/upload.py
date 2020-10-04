@@ -30,7 +30,7 @@ def clean_cache():
     print('cache cleaned!')
 
 
-random.seed(time.time_ns())
+random.seed(time.time())
 
 def myhash(source):
     sha = hashlib.sha1()
